@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../shared/src/index.ts", "../src/index.ts"],
+  "sourcesContent": ["export function isObject(value: any): boolean {\n  return typeof value === \"object\" && value != null;\n}\n", "import { isObject } from \"@mini-vue/shared\";\nconsole.log(isObject);\n"],
+  "mappings": ";;;AAAO,WAAS,SAAS,OAAqB;AAC5C,WAAO,OAAO,UAAU,YAAY,SAAS;AAAA,EAC/C;;;ACDA,UAAQ,IAAI,QAAQ;",
+  "names": []
+}

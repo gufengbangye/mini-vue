@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <button id="start-btn">开始识别</button>
+    <button id="stop-btn">结束识别</button>
+    <p id="result">识别结果将显示在这里...</p>
+
+    <script>
+      const recognition = new (window.SpeechRecognition ||
+        window.webkitSpeechRecognition)();
+      recognition.lang = "zh-CN";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      document.getElementById("start-btn").addEventListener("click", () => {
+        recognition.start();
+      });
+      document.getElementById("stop-btn").addEventListener("click", () => {
+        recognition.stop();
+      });
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript; // 获取识别的文本
+        document.getElementById("result").textContent =
+          "识别结果: " + transcript;
+      };
+      recognition.onerror = (event) => {
+        console.error("识别错误:", event.error);
+      };
+      recognition.onend = () => {
+        console.log("识别结束");
+      };
+    </script>
+  </body>
+</html>

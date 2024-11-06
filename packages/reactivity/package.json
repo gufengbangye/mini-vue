@@ -1,0 +1,17 @@
+{
+  "name": "@mini-vue/reactivity",
+  "version": "1.0.0",
+  "module": "./dist/reactivity.esm-bundler.js",
+  "buildOptions": {
+    "name": "miniVueReactivity",
+    "formats": [
+      "esm-bundler",
+      "cjs",
+      "global",
+      "esm-browser"
+    ]
+  },
+  "dependencies": {
+    "@mini-vue/shared": "workspace:^"
+  }
+}

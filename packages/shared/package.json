@@ -1,0 +1,9 @@
+{
+  "name": "@mini-vue/shared",
+  "version": "1.0.0",
+  "module": "dist/shared.esm-bundler.js",
+  "formats": [
+    "esm-bundler",
+    "cjs"
+  ]
+}

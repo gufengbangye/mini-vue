@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音频流获取示例</title>
+  </head>
+  <body>
+    <h1>音频流获取示例</h1>
+    <button id="start-btn">开始获取音频流</button>
+    <button id="stop-btn" disabled>停止获取音频流</button>
+    <p id="status">状态: 未开始</p>
+
+    <script>
+      let audioContext;
+      let source;
+
+      document.getElementById("start-btn").addEventListener("click", () => {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            audioContext = new (window.AudioContext ||
+              window.webkitAudioContext)();
+            source = audioContext.createMediaStreamSource(stream);
+            source.connect(audioContext.destination);
+            document.getElementById("status").textContent =
+              "状态: 正在获取音频流";
+            document.getElementById("stop-btn").disabled = false;
+          })
+          .catch((error) => {
+            console.error("获取音频流失败:", error);
+            document.getElementById("status").textContent =
+              "状态: 获取音频流失败";
+          });
+      });
+
+      document.getElementById("stop-btn").addEventListener("click", () => {
+        if (source) {
+          source.disconnect();
+          audioContext.close();
+          document.getElementById("status").textContent =
+            "状态: 已停止获取音频流";
+          document.getElementById("stop-btn").disabled = true;
+        }
+      });
+    </script>
+  </body>
+</html>
