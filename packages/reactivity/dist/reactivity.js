@@ -6,9 +6,13 @@ var ReactiveEffect = class {
   }
   //会被转化为constructor(){this.fn = fn}
   _run() {
-    activeEffect = this.fn;
-    this.fn();
-    activeEffect = void 0;
+    try {
+      this.parent = activeEffect;
+      activeEffect = this.fn;
+      this.fn();
+    } finally {
+      activeEffect = this.parent;
+    }
   }
 };
 function effect(fn) {
@@ -20,7 +24,6 @@ function effect(fn) {
 function isObject(value) {
   return typeof value === "object" && value != null;
 }
-console.log(1);
 
 // packages/reactivity/src/baseHandler.ts
 var baseHandler = {

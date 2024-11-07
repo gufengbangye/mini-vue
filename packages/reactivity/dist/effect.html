@@ -12,10 +12,15 @@
       const target = {
         name: 1,
         pink: 2,
+        address: 3,
       };
       const state = reactive(target);
       effect(() => {
         console.log(state.name);
+        effect(() => {
+          console.log(state.pink);
+        });
+        console.log(state.address);
       });
     </script>
   </body>

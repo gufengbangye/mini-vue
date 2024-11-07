@@ -1,6 +1,8 @@
 //用于后续将当前的effect和后续响应式数据的改变关联起来
-export let activeEffect: void | (() => void); //联合类型里函数需要被括号括起来
+type activeEffect = void | (() => void);
+export let activeEffect: activeEffect; //联合类型里函数需要被括号括起来
 class ReactiveEffect {
+  private parent?: activeEffect;
   constructor(private fn: () => void) {} //会被转化为constructor(){this.fn = fn}
   _run() {
     //当前代码有个问题就是当嵌套的effect会出现问题
@@ -20,9 +22,14 @@ class ReactiveEffect {
     //   console.log(state.pink); //这个时候这个里对应的activeEffect为undefined
     // });
 
-    activeEffect = this.fn;
-    this.fn();
-    activeEffect = void 0;
+    try {
+      //每次进来都要将parent设置为上一个activeEffect
+      this.parent = activeEffect;
+      activeEffect = this.fn;
+      this.fn();
+    } finally {
+      activeEffect = this.parent;
+    }
   }
 }
 export function effect(fn: () => void) {
