@@ -1,2 +1,2 @@
-import { isObject } from "@mini-vue/shared";
-console.log(isObject);
+export * from "./effect";
+export * from "./reactive";

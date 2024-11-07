@@ -6,7 +6,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "node ./scripts/dev.js reactivity "
+    "dev": "node ./scripts/dev.js reactivity -f esm"
   },
   "keywords": [],
   "author": "",
