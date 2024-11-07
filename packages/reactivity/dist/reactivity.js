@@ -1,6 +1,19 @@
 // packages/reactivity/src/effect.ts
-function effect() {
-  console.log("effect");
+var activeEffect;
+var ReactiveEffect = class {
+  constructor(fn) {
+    this.fn = fn;
+  }
+  //会被转化为constructor(){this.fn = fn}
+  _run() {
+    activeEffect = this.fn;
+    this.fn();
+    activeEffect = void 0;
+  }
+};
+function effect(fn) {
+  const _effect = new ReactiveEffect(fn);
+  _effect._run();
 }
 
 // packages/shared/src/index.ts
@@ -12,6 +25,7 @@ console.log(1);
 // packages/reactivity/src/baseHandler.ts
 var baseHandler = {
   get(target, key, receiver) {
+    console.log("\u89E6\u53D1\u4EE3\u7406");
     return Reflect.get(target, key, receiver);
   },
   set(target, key, value, receiver) {
@@ -43,6 +57,7 @@ function createReactive(obj) {
   return result;
 }
 export {
+  activeEffect,
   effect,
   reactive
 };

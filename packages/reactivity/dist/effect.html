@@ -9,14 +9,11 @@
     <div id="app"></div>
     <script type="module">
       import { reactive, effect } from "./reactivity.js";
-      console.log(reactive);
       const target = {
         name: 1,
         pink: 2,
       };
       const state = reactive(target);
-      const state1 = reactive(target);
-      const state3 = reactive(state);
       effect(() => {
         console.log(state.name);
       });
