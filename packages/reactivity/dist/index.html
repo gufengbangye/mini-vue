@@ -9,6 +9,7 @@
     <div id="app"></div>
     <script type="module">
       import { reactive, effect } from "./reactivity.js";
+      const app = document.getElementById("app");
       console.log(reactive);
       const target = {
         name: 1,
@@ -18,7 +19,14 @@
       const state1 = reactive(target);
       const state3 = reactive(state);
       effect(() => {
+        //一个effect里的属性会被多次收集;
         console.log(state.name);
+        app.textContent = state.name;
+      });
+      effect(() => {
+        console.log(state.name);
+        console.log(state.pink);
+        app.textContent = state.pink;
       });
     </script>
   </body>

@@ -1,9 +1,12 @@
 //用于后续将当前的effect和后续响应式数据的改变关联起来
-type activeEffect = void | (() => void);
+export type activeEffect = void | ReactiveEffect;
 export let activeEffect: activeEffect; //联合类型里函数需要被括号括起来
 class ReactiveEffect {
+  _trackId = 0;
+  _deps: Map<any, any>[] = [];
+  _depsLength = 0;
   private parent?: activeEffect;
-  constructor(private fn: () => void) {} //会被转化为constructor(){this.fn = fn}
+  constructor(private fn: () => void, private schedule: () => void) {} //会被转化为constructor(){this.fn = fn}
   _run() {
     //当前代码有个问题就是当嵌套的effect会出现问题
     //代码例子
@@ -25,14 +28,16 @@ class ReactiveEffect {
     try {
       //每次进来都要将parent设置为上一个activeEffect
       this.parent = activeEffect;
-      activeEffect = this.fn;
-      this.fn();
+      activeEffect = this;
+      return this.fn();
     } finally {
       activeEffect = this.parent;
     }
   }
 }
 export function effect(fn: () => void) {
-  const _effect = new ReactiveEffect(fn);
-  _effect._run();
+  const _effect = new ReactiveEffect(fn, () => {
+    _effect._run();
+  });
+  return _effect._run();
 }
