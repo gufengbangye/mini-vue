@@ -1,5 +1,6 @@
 // packages/reactivity/src/effect.ts
 var activeEffect;
+var reactiveEffectMap = /* @__PURE__ */ new WeakMap();
 var ReactiveEffect = class {
   constructor(fn, schedule) {
     this.fn = fn;
@@ -17,13 +18,43 @@ var ReactiveEffect = class {
       activeEffect = this;
       return this.fn();
     } finally {
+      afterClean(this);
       activeEffect = this.parent;
     }
   }
 };
-function preClean(effect3) {
-  effect3._trackId++;
-  effect3._depsLength = 0;
+function preClean(effect2) {
+  effect2._trackId++;
+  effect2._depsLength = 0;
+}
+function afterClean(effect2) {
+  if (effect2._depsLength < effect2._deps.length) {
+    for (let i = effect2._depsLength; i < effect2._deps.length; i++) {
+      cleanEffectDep(effect2, effect2._deps[i]);
+    }
+    effect2._depsLength = effect2._deps.length;
+  }
+}
+function trackEffect(effect2, dep) {
+  if (!activeEffect) return;
+  if (dep.get(effect2) !== effect2._trackId) {
+    debugger;
+    dep.set(effect2, effect2._trackId);
+    const oldDep = effect2._deps[effect2._depsLength];
+    if (oldDep === dep) {
+      effect2._depsLength++;
+    } else {
+      oldDep && cleanEffectDep(effect2, oldDep);
+      effect2._deps[effect2._depsLength++] = dep;
+    }
+  }
+  console.log(reactiveEffectMap);
+}
+function cleanEffectDep(effect2, dep) {
+  dep.delete(effect2);
+  if (dep.size === 0) {
+    dep.cleanup();
+  }
 }
 function effect(fn) {
   const _effect = new ReactiveEffect(fn, () => {
@@ -37,13 +68,34 @@ function isObject(value) {
   return typeof value === "object" && value != null;
 }
 
+// packages/reactivity/src/Dep.ts
+var Dep = class {
+  constructor(cleanup, key) {
+    this.map = /* @__PURE__ */ new Map();
+    this.cleanup = cleanup;
+    this.name = key;
+  }
+  get size() {
+    return this.map.size;
+  }
+  set(key, value) {
+    this.map.set(key, value);
+  }
+  delete(key) {
+    console.log(key, "deletekey");
+    this.map.delete(key);
+  }
+  get(key) {
+    return this.map.get(key);
+  }
+  keys() {
+    return this.map.keys();
+  }
+};
+
 // packages/reactivity/src/track.ts
-var reactiveEffectMap = /* @__PURE__ */ new WeakMap();
 function createDep(cleanup, key) {
-  const dep = /* @__PURE__ */ new Map();
-  dep.set("cleanup", cleanup);
-  dep.set("name", key);
-  return dep;
+  return new Dep(cleanup, key);
 }
 function track(target, key) {
   if (!activeEffect) return;
@@ -53,33 +105,20 @@ function track(target, key) {
   }
   let dep = depsMap.get(key);
   if (!dep) {
-    depsMap.set(key, dep = createDep(() => dep.delete(key), key));
+    depsMap.set(key, dep = createDep(() => depsMap.delete(key), key));
   }
   trackEffect(activeEffect, dep);
 }
-function trackEffect(effect3, dep) {
-  if (dep.get(effect3) !== effect3._trackId) {
-    dep.set(effect3, effect3._trackId);
-    const oldDep = effect3._deps[effect3._depsLength];
-    if (oldDep === dep) {
-      effect3._depsLength++;
-    } else {
-      console.log("dep", oldDep);
-      oldDep && cleanEffectDep(effect3, oldDep);
-      effect3._deps[effect3._depsLength++] = dep;
-    }
-  }
-}
 function trigger(target, key) {
   const depsMap = reactiveEffectMap.get(target);
-  for (const effect3 of depsMap.get(key).keys()) {
-    effect3.schedule && effect3.schedule();
-  }
+  if (!depsMap) return;
+  const dep = depsMap.get(key);
+  if (!dep) return;
+  triggerEffect(dep);
 }
-function cleanEffectDep(effect3, dep) {
-  dep.delete(effect3);
-  if (dep.size === 0) {
-    dep.get("cleanup") && dep.get("cleanup")();
+function triggerEffect(dep) {
+  for (const effect2 of dep.keys()) {
+    effect2.schedule && effect2.schedule();
   }
 }
 
@@ -125,6 +164,8 @@ function createReactive(obj) {
 export {
   activeEffect,
   effect,
-  reactive
+  reactive,
+  reactiveEffectMap,
+  trackEffect
 };
 //# sourceMappingURL=reactivity.js.map
