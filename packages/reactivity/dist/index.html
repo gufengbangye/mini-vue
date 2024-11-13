@@ -24,35 +24,10 @@
         cc: 33,
       };
       const state = reactive(target);
-      const _effect = effect(
-        () => {
-          console.log("runner");
-          // const a = state.name ? state.pink : state.address;
-          if (state.name) {
-            console.log(state.pink);
-            console.log(state.address);
-            console.log(state.aa);
-            console.log(state.bb);
-          } else {
-            console.log(state.cc);
-          }
-        },
-        {
-          scheduler: () => {
-            console.log("scheduler");
-            _effect();
-          },
-        }
-      );
-      setTimeout(() => {
-        state.name = false;
-      }, 2000);
-
-      // effect(() => {
-      //   // console.log(state.name);
-      //   console.log(state.pink);
-      //   app.textContent = state.pink;
-      // });
+      effect(() => {
+        app.textContent = state.name;
+        state.name = Math.random();
+      });
     </script>
   </body>
 </html>

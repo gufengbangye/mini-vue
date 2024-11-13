@@ -9,6 +9,7 @@ var ReactiveEffect = class {
     this._deps = [];
     //用于存放当前effect里有多少个dep
     this._depsLength = 0;
+    this.isRunning = 0;
   }
   //会被转化为constructor(){this.fn = fn}
   _run() {
@@ -16,8 +17,10 @@ var ReactiveEffect = class {
     try {
       this.parent = activeEffect;
       activeEffect = this;
+      this.isRunning++;
       return this.fn();
     } finally {
+      this.isRunning--;
       afterClean(this);
       activeEffect = this.parent;
     }
@@ -121,7 +124,9 @@ function trigger(target, key) {
 }
 function triggerEffect(dep) {
   for (const effect2 of dep.keys()) {
-    effect2.scheduler && effect2.scheduler();
+    if (!effect2.isRunning) {
+      effect2.scheduler && effect2.scheduler();
+    }
   }
 }
 

@@ -11,6 +11,7 @@ class ReactiveEffect {
   _deps: Dep[] = []; //用于存放当前effect里有多少个dep
   _depsLength = 0; //主要用于记录上一次依赖的个数 后续通过比较新老length 删除多余的依赖
   private parent?: activeEffect;
+  isRunning = 0;
   constructor(private fn: () => void, private scheduler: () => void) {} //会被转化为constructor(){this.fn = fn}
   _run() {
     //当前代码有个问题就是当嵌套的effect会出现问题
@@ -34,8 +35,10 @@ class ReactiveEffect {
       //每次进来都要将parent设置为上一个activeEffect
       this.parent = activeEffect;
       activeEffect = this;
+      this.isRunning++; //后续在执行时根据该值是否为0判断
       return this.fn();
     } finally {
+      this.isRunning--;
       //移除deps里多余的 由于每一次effect会导致不同的dep都被推入进来如下例子
       // const test = reactive({ a: 1,b:2,c:3,d:4,e:5 });
       // effect(() => {
