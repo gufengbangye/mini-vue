@@ -136,8 +136,12 @@ var baseHandler = {
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
-    activeEffect && track(target, key);
-    return Reflect.get(target, key, receiver);
+    track(target, key);
+    let res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
   },
   set(target, key, value, receiver) {
     const oldValue = target[key];

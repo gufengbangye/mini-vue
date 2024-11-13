@@ -1,5 +1,6 @@
 import { track, trigger } from "./track";
-import { activeEffect } from "./effect";
+import { isObject } from "@mini-vue/shared";
+import { reactive } from "./reactive";
 export enum ReactiveFlags {
   IS_REACTIVE = "__v_isReactive",
 }
@@ -8,8 +9,12 @@ export const baseHandler = {
     if (key === ReactiveFlags.IS_REACTIVE) {
       return true;
     }
-    activeEffect && track(target, key);
-    return Reflect.get(target, key, receiver);
+    track(target, key);
+    let res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
   },
   set(
     target: Record<PropertyKey, any>,

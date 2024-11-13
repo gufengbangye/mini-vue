@@ -22,12 +22,17 @@
         aa: 11,
         bb: 22,
         cc: 33,
+        kk: {
+          a: 1,
+        },
       };
       const state = reactive(target);
       effect(() => {
-        app.textContent = state.name;
-        state.name = Math.random();
+        console.log(state.kk.a, "深度");
       });
+      setTimeout(() => {
+        state.kk.a = 4;
+      }, 2000);
     </script>
   </body>
 </html>
