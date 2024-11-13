@@ -41,6 +41,6 @@ export function trigger(target: object, key: PropertyKey) {
 }
 function triggerEffect(dep: Dep) {
   for (const effect of dep.keys()) {
-    effect.schedule && effect.schedule();
+    effect.scheduler && effect.scheduler();
   }
 }

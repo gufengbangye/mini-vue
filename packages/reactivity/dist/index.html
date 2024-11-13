@@ -9,6 +9,11 @@
     <div id="app"></div>
     <script type="module">
       import { reactive, effect } from "./reactivity.js";
+
+      // import {
+      //   reactive,
+      //   effect,
+      // } from "../../../node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
       const app = document.getElementById("app");
       const target = {
         name: true,
@@ -19,36 +24,28 @@
         cc: 33,
       };
       const state = reactive(target);
-      const state1 = reactive(target);
-      const state3 = reactive(state);
-      // effect(() => {
-      //   //一个effect里的属性会被多次收集;
-      //   console.log(state.name);
-      //   console.log(state.name);
-      //   app.textContent = state.name;
-      //   effect(() => {
-      //     console.log(state.name);
-      //   });
-      // });
-      //测试不同条件读取不同值的时候
-      effect(() => {
-        console.log("runner");
-        // const a = state.name ? state.pink : state.address;
-        if (state.name) {
-          console.log(state.pink);
-          console.log(state.address);
-          console.log(state.aa);
-          console.log(state.bb);
-        } else {
-          console.log(state.cc);
+      const _effect = effect(
+        () => {
+          console.log("runner");
+          // const a = state.name ? state.pink : state.address;
+          if (state.name) {
+            console.log(state.pink);
+            console.log(state.address);
+            console.log(state.aa);
+            console.log(state.bb);
+          } else {
+            console.log(state.cc);
+          }
+        },
+        {
+          scheduler: () => {
+            console.log("scheduler");
+            _effect();
+          },
         }
-      });
+      );
       setTimeout(() => {
         state.name = false;
-        setTimeout(() => {
-          console.log("修改但不应该执行");
-          state.aa = "kkk";
-        }, 1000);
       }, 2000);
 
       // effect(() => {

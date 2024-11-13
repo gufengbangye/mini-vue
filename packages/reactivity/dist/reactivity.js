@@ -2,9 +2,9 @@
 var activeEffect;
 var reactiveEffectMap = /* @__PURE__ */ new WeakMap();
 var ReactiveEffect = class {
-  constructor(fn, schedule) {
+  constructor(fn, scheduler) {
     this.fn = fn;
-    this.schedule = schedule;
+    this.scheduler = scheduler;
     this._trackId = 0;
     this._deps = [];
     //用于存放当前effect里有多少个dep
@@ -38,7 +38,6 @@ function afterClean(effect2) {
 function trackEffect(effect2, dep) {
   if (!activeEffect) return;
   if (dep.get(effect2) !== effect2._trackId) {
-    debugger;
     dep.set(effect2, effect2._trackId);
     const oldDep = effect2._deps[effect2._depsLength];
     if (oldDep === dep) {
@@ -48,7 +47,6 @@ function trackEffect(effect2, dep) {
       effect2._deps[effect2._depsLength++] = dep;
     }
   }
-  console.log(reactiveEffectMap);
 }
 function cleanEffectDep(effect2, dep) {
   dep.delete(effect2);
@@ -56,11 +54,17 @@ function cleanEffectDep(effect2, dep) {
     dep.cleanup();
   }
 }
-function effect(fn) {
+function effect(fn, options) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect._run();
   });
-  return _effect._run();
+  if (options) {
+    Object.assign(_effect, options);
+  }
+  _effect._run();
+  const runner = _effect._run.bind(_effect);
+  runner._effect = _effect;
+  return runner;
 }
 
 // packages/shared/src/index.ts
@@ -82,7 +86,6 @@ var Dep = class {
     this.map.set(key, value);
   }
   delete(key) {
-    console.log(key, "deletekey");
     this.map.delete(key);
   }
   get(key) {
@@ -118,7 +121,7 @@ function trigger(target, key) {
 }
 function triggerEffect(dep) {
   for (const effect2 of dep.keys()) {
-    effect2.schedule && effect2.schedule();
+    effect2.scheduler && effect2.scheduler();
   }
 }
 
@@ -153,7 +156,6 @@ function createReactive(obj) {
   if (reactiveWeakMap.has(obj)) {
     return reactiveWeakMap.get(obj);
   }
-  console.log("__v_isReactive" /* IS_REACTIVE */, "lll");
   if (obj["__v_isReactive" /* IS_REACTIVE */]) {
     return obj;
   }

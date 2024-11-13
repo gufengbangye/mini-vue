@@ -3,12 +3,15 @@ import { Dep } from "./Dep";
 export type activeEffect = void | ReactiveEffect;
 export let activeEffect: activeEffect; //联合类型里函数需要被括号括起来
 export const reactiveEffectMap = new WeakMap();
+type ReactiveEffectOptions = {
+  scheduler: () => void;
+};
 class ReactiveEffect {
   _trackId = 0;
   _deps: Dep[] = []; //用于存放当前effect里有多少个dep
   _depsLength = 0; //主要用于记录上一次依赖的个数 后续通过比较新老length 删除多余的依赖
   private parent?: activeEffect;
-  constructor(private fn: () => void, private schedule: () => void) {} //会被转化为constructor(){this.fn = fn}
+  constructor(private fn: () => void, private scheduler: () => void) {} //会被转化为constructor(){this.fn = fn}
   _run() {
     //当前代码有个问题就是当嵌套的effect会出现问题
     //代码例子
@@ -91,7 +94,6 @@ function afterClean(effect: ReactiveEffect): void {
 export function trackEffect(effect: Exclude<activeEffect, void>, dep: Dep) {
   if (!activeEffect) return;
   if (dep.get(effect) !== effect._trackId) {
-    debugger;
     //如果这个dep里的effect的_trackId和当前effect的_trackId不相等说明这个effect没有监听过这个dep
     dep.set(effect, effect._trackId);
     const oldDep = effect._deps[effect._depsLength];
@@ -114,12 +116,6 @@ export function trackEffect(effect: Exclude<activeEffect, void>, dep: Dep) {
     // {flag,address}
     //因为大部分时候代码从上到下执行顺序不变所以可以通过数组顺序即可
   }
-  console.log(reactiveEffectMap);
-  //todo
-  //将每个effect存到dep里 一个dep在同一个effect中只需要一次监听不需要多次
-  // effect._trackId
-  // effect._deps[effect._depsLength++] = dep;
-  // console.log(reactiveEffectMap, "map");
 }
 //移除dep里的effect
 function cleanEffectDep(effect: activeEffect, dep: Dep) {
@@ -130,9 +126,16 @@ function cleanEffectDep(effect: activeEffect, dep: Dep) {
     dep.cleanup();
   }
 }
-export function effect(fn: () => void) {
+export function effect(fn: () => void, options?: ReactiveEffectOptions) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect._run();
   });
-  return _effect._run();
+  if (options) {
+    //将传入的做合并这样可以替代原有的schedule
+    Object.assign(_effect, options);
+  }
+  _effect._run();
+  const runner = _effect._run.bind(_effect) as any;
+  runner._effect = _effect;
+  return runner;
 }

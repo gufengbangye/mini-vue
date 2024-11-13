@@ -17,7 +17,6 @@ export class Dep {
     this.map.set(key, value);
   }
   delete(key: any) {
-    console.log(key, "deletekey");
     this.map.delete(key);
   }
 
