@@ -17,7 +17,6 @@ function createReactive<T extends object>(
     //如果该对象被代理过则返回之前的代理对象
     return reactiveWeakMap.get(obj);
   }
-  console.log(ReactiveFlags.IS_REACTIVE, "lll");
   if (obj[ReactiveFlags.IS_REACTIVE]) {
     return obj;
   }
