@@ -1,9 +1,6 @@
 import { activeEffect, trackEffect, reactiveEffectMap } from "./effect";
-import { Dep } from "./Dep";
+import { Dep, createDep } from "./Dep";
 
-function createDep(cleanup: () => void, key: PropertyKey): Dep {
-  return new Dep(cleanup, key);
-}
 export function track(target: object, key: PropertyKey) {
   //只在effect函数里收集依赖即activeEffect不为空
   if (!activeEffect) return;
@@ -37,9 +34,9 @@ export function trigger(target: object, key: PropertyKey) {
   if (!depsMap) return;
   const dep = depsMap.get(key);
   if (!dep) return;
-  triggerEffect(dep);
+  triggerEffects(dep);
 }
-function triggerEffect(dep: Dep) {
+export function triggerEffects(dep: Dep) {
   for (const effect of dep.keys()) {
     if (!effect.isRunning) {
       effect.scheduler && effect.scheduler();

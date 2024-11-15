@@ -26,3 +26,6 @@ function createReactive<T extends object>(
   reactiveWeakMap.set(obj, result);
   return result;
 }
+export function toReactive(value: any) {
+  return isObject(value) ? reactive(value) : value;
+}

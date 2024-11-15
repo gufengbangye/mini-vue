@@ -98,11 +98,11 @@ var Dep = class {
     return this.map.keys();
   }
 };
-
-// packages/reactivity/src/track.ts
 function createDep(cleanup, key) {
   return new Dep(cleanup, key);
 }
+
+// packages/reactivity/src/track.ts
 function track(target, key) {
   if (!activeEffect) return;
   let depsMap = reactiveEffectMap.get(target);
@@ -120,9 +120,9 @@ function trigger(target, key) {
   if (!depsMap) return;
   const dep = depsMap.get(key);
   if (!dep) return;
-  triggerEffect(dep);
+  triggerEffects(dep);
 }
-function triggerEffect(dep) {
+function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
     if (!effect2.isRunning) {
       effect2.scheduler && effect2.scheduler();
@@ -172,11 +172,53 @@ function createReactive(obj) {
   reactiveWeakMap.set(obj, result);
   return result;
 }
+function toReactive(value) {
+  return isObject(value) ? reactive(value) : value;
+}
+
+// packages/reactivity/src/ref.ts
+function ref(rawValue) {
+  return createRef(rawValue);
+}
+var RefImpl = class {
+  constructor(rawValue) {
+    this.rawValue = rawValue;
+    this._dep = void 0;
+    this.__v__isRef = true;
+    this._value = toReactive(rawValue);
+  }
+  get value() {
+    activeEffect && trackRefValue(this);
+    return this._value;
+  }
+  set value(newValue) {
+    if (this.rawValue !== newValue) {
+      this._value = newValue;
+      this.rawValue = newValue;
+      triggerRefValue(this);
+    }
+  }
+};
+function trackRefValue(ref2) {
+  activeEffect && trackEffect(
+    activeEffect,
+    ref2._dep = createDep(() => ref2._dep = void 0, "undefined")
+    //由于ref和reactive的主要不同就是ref:ref(false) reactive:{name:a,b:c} 所以ref不像reactive那样需要使用reactiveEffectMap通过key去拿到不同的dep 他就直接在实例上自身创建一个dep即可
+  );
+}
+function triggerRefValue(ref2) {
+  ref2._dep && triggerEffects(ref2._dep);
+}
+function createRef(rawValue) {
+  return new RefImpl(rawValue);
+}
 export {
   activeEffect,
   effect,
   reactive,
   reactiveEffectMap,
+  ref,
+  toReactive,
   trackEffect
 };
 //# sourceMappingURL=reactivity.js.map

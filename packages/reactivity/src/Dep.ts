@@ -28,3 +28,6 @@ export class Dep {
     return this.map.keys();
   }
 }
+export function createDep(cleanup: () => void, key: PropertyKey): Dep {
+  return new Dep(cleanup, key);
+}
