@@ -212,6 +212,22 @@ function triggerRefValue(ref2) {
 function createRef(rawValue) {
   return new RefImpl(rawValue);
 }
+function toRef(obj, key) {
+  return new ObjectRefImpl(obj, key);
+}
+var ObjectRefImpl = class {
+  constructor(raw, key) {
+    this.raw = raw;
+    this.key = key;
+    this.__v__isRef = true;
+  }
+  get value() {
+    return this.raw[this.key];
+  }
+  set value(newValue) {
+    this.raw[this.key] = newValue;
+  }
+};
 export {
   activeEffect,
   effect,
@@ -219,6 +235,7 @@ export {
   reactiveEffectMap,
   ref,
   toReactive,
+  toRef,
   trackEffect
 };
 //# sourceMappingURL=reactivity.js.map

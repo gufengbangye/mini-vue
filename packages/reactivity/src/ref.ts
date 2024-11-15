@@ -41,3 +41,17 @@ function triggerRefValue(ref: RefImpl) {
 function createRef(rawValue: any): RefImpl {
   return new RefImpl(rawValue);
 }
+//toRef
+export function toRef(obj: object, key: PropertyKey) {
+  return new ObjectRefImpl(obj, key);
+}
+class ObjectRefImpl {
+  public __v__isRef = true;
+  constructor(public raw: Record<PropertyKey, any>, public key: PropertyKey) {}
+  get value() {
+    return this.raw[this.key];
+  }
+  set value(newValue: any) {
+    this.raw[this.key] = newValue;
+  }
+}
