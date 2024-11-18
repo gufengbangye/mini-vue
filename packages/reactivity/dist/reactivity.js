@@ -215,6 +215,30 @@ function createRef(rawValue) {
 function toRef(obj, key) {
   return new ObjectRefImpl(obj, key);
 }
+function toRefs(obj) {
+  let res = {};
+  for (const [key, value] of Object.entries(obj)) {
+    res[key] = toRef(obj, key);
+  }
+  return res;
+}
+function proxyRefs(object) {
+  return new Proxy(object, {
+    get(target, key, receiver) {
+      const r = Reflect.get(target, key, receiver);
+      return r.__v__isRef ? r.value : r;
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key];
+      if (oldValue.__v__isRef) {
+        oldValue.value = value;
+        return true;
+      } else {
+        return Reflect.set(target, key, value, receiver);
+      }
+    }
+  });
+}
 var ObjectRefImpl = class {
   constructor(raw, key) {
     this.raw = raw;
@@ -231,11 +255,13 @@ var ObjectRefImpl = class {
 export {
   activeEffect,
   effect,
+  proxyRefs,
   reactive,
   reactiveEffectMap,
   ref,
   toReactive,
   toRef,
+  toRefs,
   trackEffect
 };
 //# sourceMappingURL=reactivity.js.map

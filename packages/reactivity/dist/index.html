@@ -8,23 +8,32 @@
   <body>
     <div id="app"></div>
     <script type="module">
-      import { reactive, effect, ref, toRef } from "./reactivity.js";
+      import {
+        reactive,
+        effect,
+        ref,
+        toRef,
+        toRefs,
+        proxyRefs,
+      } from "./reactivity.js";
 
       // import {
       //   toRef,
       //   ref,
       //   reactive,
       //   effect,
+      //   toRefs,
       // } from "../../../node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
       const app = document.getElementById("app");
       //响应式会丢失
       //let { a, b } = reactive({ a: 1, b: 2 });
       const state = reactive({ a: 1, b: 2 });
-      const a = toRef(state, "a");
+      const a = proxyRefs({ ...toRefs(state), k: 1 });
       effect(() => {
-        console.log(a.value, "ll");
+        console.log(a.a, "ll");
       });
-      a.value++;
+      a.a++;
+      a.k++; //不会触发依赖更新
     </script>
   </body>
 </html>

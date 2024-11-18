@@ -45,6 +45,31 @@ function createRef(rawValue: any): RefImpl {
 export function toRef(obj: object, key: PropertyKey) {
   return new ObjectRefImpl(obj, key);
 }
+export function toRefs(obj: object) {
+  let res: Record<PropertyKey, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    res[key] = toRef(obj, key);
+  }
+  return res;
+}
+export function proxyRefs(object: Record<PropertyKey, any>) {
+  return new Proxy(object, {
+    get(target, key, receiver) {
+      //如果是ref就去读取ref.value不是的话就正常
+      const r = Reflect.get(target, key, receiver);
+      return r.__v__isRef ? r.value : r;
+    },
+    set(target, key, value, receiver) {
+      const oldValue: any = target[key];
+      if (oldValue.__v__isRef) {
+        oldValue.value = value;
+        return true;
+      } else {
+        return Reflect.set(target, key, value, receiver);
+      }
+    },
+  });
+}
 class ObjectRefImpl {
   public __v__isRef = true;
   constructor(public raw: Record<PropertyKey, any>, public key: PropertyKey) {}
