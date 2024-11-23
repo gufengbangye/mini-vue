@@ -307,6 +307,44 @@ var ComputedRefImpl = class {
     this.setter(v);
   }
 };
+
+// packages/reactivity/src/apiWatch.ts
+function watch(source, callback, options) {
+  doWatch(source, callback, options);
+}
+function doWatch(source, callback, { deep = false, depth = 0 }) {
+  const getter = () => traves(source, depth = deep ? depth ? depth : Infinity : 1, 0);
+  let oldValue;
+  const job = () => {
+    const newValue = effect3._run();
+    callback(oldValue, newValue);
+    oldValue = newValue;
+  };
+  const effect3 = new ReactiveEffect(getter, () => {
+    job();
+  });
+  oldValue = effect3._run();
+}
+function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set()) {
+  if (!isObject(source)) {
+    return source;
+  }
+  if (depth) {
+    if (currentDepth >= depth) {
+      return source;
+    }
+    currentDepth++;
+  }
+  if (seen.has(source)) {
+    return source;
+  } else {
+    seen.add(source);
+  }
+  for (const key in source) {
+    traves(source[key], depth, currentDepth, seen);
+  }
+  return source;
+}
 export {
   ReactiveEffect,
   activeEffect,
@@ -321,6 +359,7 @@ export {
   toRefs,
   trackEffect,
   trackRefValue,
-  triggerRefValue
+  triggerRefValue,
+  watch
 };
 //# sourceMappingURL=reactivity.js.map

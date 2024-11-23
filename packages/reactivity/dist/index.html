@@ -15,6 +15,8 @@
         toRef,
         toRefs,
         proxyRefs,
+        computed,
+        watch,
       } from "./reactivity.js";
 
       // import {
@@ -23,17 +25,40 @@
       //   reactive,
       //   effect,
       //   toRefs,
+      //   computed,
       // } from "../../../node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
       const app = document.getElementById("app");
       //响应式会丢失
       //let { a, b } = reactive({ a: 1, b: 2 });
-      const state = reactive({ a: 1, b: 2 });
-      const a = proxyRefs({ ...toRefs(state), k: 1 });
-      effect(() => {
-        console.log(a.a, "ll");
-      });
-      a.a++;
-      a.k++; //不会触发依赖更新
+      const state = reactive({ name: 1, address: { n: 1 } });
+      // const name = computed({
+      //   get(oldValue) {
+      //     console.log("执行", oldValue);
+      //     return "sss" + state.name;
+      //   },
+      //   set(val) {
+      //     state.name = "slslls";
+      //   },
+      // });
+
+      // effect(() => {
+      //   console.log(name.value);
+      //   console.log(name.value);
+      //   console.log(name.value);
+      // });
+      watch(
+        state,
+        (oldValue, newValue) => {
+          console.log(oldValue, newValue);
+        },
+        {
+          deep: true,
+          depth: 2,
+        }
+      );
+      setTimeout(() => {
+        state.address.n = "pink";
+      }, 1000);
     </script>
   </body>
 </html>
