@@ -26,7 +26,7 @@ class RefImpl {
   }
 }
 //收集ref依赖
-function trackRefValue(ref: RefImpl) {
+export function trackRefValue(ref: { _dep: Dep | void }) {
   activeEffect &&
     trackEffect(
       activeEffect,
@@ -35,7 +35,7 @@ function trackRefValue(ref: RefImpl) {
     );
 }
 //触发ref依赖
-function triggerRefValue(ref: RefImpl) {
+export function triggerRefValue(ref: { _dep: Dep | void }) {
   ref._dep && triggerEffects(ref._dep);
 }
 function createRef(rawValue: any): RefImpl {

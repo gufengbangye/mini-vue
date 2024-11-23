@@ -1,5 +1,6 @@
 import { isObject } from "@mini-vue/shared";
-import { baseHandler, ReactiveFlags } from "./baseHandler";
+import { baseHandler } from "./baseHandler";
+import { ReactiveFlags } from "./constants";
 export function reactive(raw: object) {
   if (!isObject(raw)) {
     return;

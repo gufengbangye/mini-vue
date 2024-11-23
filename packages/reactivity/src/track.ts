@@ -1,6 +1,6 @@
-import { activeEffect, trackEffect, reactiveEffectMap } from "./effect";
+import { activeEffect, trackEffect, reactiveEffectMap, effect } from "./effect";
 import { Dep, createDep } from "./Dep";
-
+import { DirtyLevels } from "./constants";
 export function track(target: object, key: PropertyKey) {
   //只在effect函数里收集依赖即activeEffect不为空
   if (!activeEffect) return;
@@ -38,6 +38,10 @@ export function trigger(target: object, key: PropertyKey) {
 }
 export function triggerEffects(dep: Dep) {
   for (const effect of dep.keys()) {
+    if (effect._dirtyLevel <= DirtyLevels.Dirty) {
+      //每次执行需要将之前的dirty变成脏的
+      effect._dirtyLevel = DirtyLevels.Dirty;
+    }
     if (!effect.isRunning) {
       effect.scheduler && effect.scheduler();
     }

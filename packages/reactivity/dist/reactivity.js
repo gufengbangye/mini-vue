@@ -9,6 +9,7 @@ var ReactiveEffect = class {
     this._deps = [];
     //用于存放当前effect里有多少个dep
     this._depsLength = 0;
+    this._dirtyLevel = 4 /* Dirty */;
     this.isRunning = 0;
   }
   //会被转化为constructor(){this.fn = fn}
@@ -18,6 +19,7 @@ var ReactiveEffect = class {
       this.parent = activeEffect;
       activeEffect = this;
       this.isRunning++;
+      this.dirty = false;
       return this.fn();
     } finally {
       this.isRunning--;
@@ -25,34 +27,40 @@ var ReactiveEffect = class {
       activeEffect = this.parent;
     }
   }
+  get dirty() {
+    return this._dirtyLevel === 4 /* Dirty */;
+  }
+  set dirty(value) {
+    this._dirtyLevel = value ? 4 /* Dirty */ : 0 /* NotDirty */;
+  }
 };
-function preClean(effect2) {
-  effect2._trackId++;
-  effect2._depsLength = 0;
+function preClean(effect3) {
+  effect3._trackId++;
+  effect3._depsLength = 0;
 }
-function afterClean(effect2) {
-  if (effect2._depsLength < effect2._deps.length) {
-    for (let i = effect2._depsLength; i < effect2._deps.length; i++) {
-      cleanEffectDep(effect2, effect2._deps[i]);
+function afterClean(effect3) {
+  if (effect3._depsLength < effect3._deps.length) {
+    for (let i = effect3._depsLength; i < effect3._deps.length; i++) {
+      cleanEffectDep(effect3, effect3._deps[i]);
     }
-    effect2._depsLength = effect2._deps.length;
+    effect3._depsLength = effect3._deps.length;
   }
 }
-function trackEffect(effect2, dep) {
+function trackEffect(effect3, dep) {
   if (!activeEffect) return;
-  if (dep.get(effect2) !== effect2._trackId) {
-    dep.set(effect2, effect2._trackId);
-    const oldDep = effect2._deps[effect2._depsLength];
+  if (dep.get(effect3) !== effect3._trackId) {
+    dep.set(effect3, effect3._trackId);
+    const oldDep = effect3._deps[effect3._depsLength];
     if (oldDep === dep) {
-      effect2._depsLength++;
+      effect3._depsLength++;
     } else {
-      oldDep && cleanEffectDep(effect2, oldDep);
-      effect2._deps[effect2._depsLength++] = dep;
+      oldDep && cleanEffectDep(effect3, oldDep);
+      effect3._deps[effect3._depsLength++] = dep;
     }
   }
 }
-function cleanEffectDep(effect2, dep) {
-  dep.delete(effect2);
+function cleanEffectDep(effect3, dep) {
+  dep.delete(effect3);
   if (dep.size === 0) {
     dep.cleanup();
   }
@@ -73,6 +81,9 @@ function effect(fn, options) {
 // packages/shared/src/index.ts
 function isObject(value) {
   return typeof value === "object" && value != null;
+}
+function isFunction(value) {
+  return typeof value === "function";
 }
 
 // packages/reactivity/src/Dep.ts
@@ -123,9 +134,12 @@ function trigger(target, key) {
   triggerEffects(dep);
 }
 function triggerEffects(dep) {
-  for (const effect2 of dep.keys()) {
-    if (!effect2.isRunning) {
-      effect2.scheduler && effect2.scheduler();
+  for (const effect3 of dep.keys()) {
+    if (effect3._dirtyLevel <= 4 /* Dirty */) {
+      effect3._dirtyLevel = 4 /* Dirty */;
+    }
+    if (!effect3.isRunning) {
+      effect3.scheduler && effect3.scheduler();
     }
   }
 }
@@ -252,8 +266,51 @@ var ObjectRefImpl = class {
     this.raw[this.key] = newValue;
   }
 };
+
+// packages/reactivity/src/computed.ts
+function computed(getterOrOptions) {
+  let getter;
+  let setter;
+  if (isFunction(getterOrOptions)) {
+    getter = getterOrOptions;
+    setter = () => {
+    };
+  } else {
+    getter = getterOrOptions.get;
+    setter = getterOrOptions.set;
+  }
+  return new ComputedRefImpl(getter, setter);
+}
+var ComputedRefImpl = class {
+  constructor(getter, setter) {
+    this.setter = setter;
+    this._effect = void 0;
+    this._dep = void 0;
+    this._effect = new ReactiveEffect(
+      () => getter(this.value),
+      () => {
+        triggerRefValue(this);
+      }
+    );
+  }
+  get value() {
+    console.log(this._effect?.dirty, "dirty");
+    if (this._effect?.dirty) {
+      this._value = this._effect._run();
+      debugger;
+      trackRefValue(this);
+    }
+    return this._value;
+  }
+  set value(v) {
+    console.log("\u8BBE\u7F6E");
+    this.setter(v);
+  }
+};
 export {
+  ReactiveEffect,
   activeEffect,
+  computed,
   effect,
   proxyRefs,
   reactive,
@@ -262,6 +319,8 @@ export {
   toReactive,
   toRef,
   toRefs,
-  trackEffect
+  trackEffect,
+  trackRefValue,
+  triggerRefValue
 };
 //# sourceMappingURL=reactivity.js.map

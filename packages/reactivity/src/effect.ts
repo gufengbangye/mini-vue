@@ -1,4 +1,5 @@
 import { Dep } from "./Dep";
+import { DirtyLevels } from "./constants";
 //用于后续将当前的effect和后续响应式数据的改变关联起来
 export type activeEffect = void | ReactiveEffect;
 export let activeEffect: activeEffect; //联合类型里函数需要被括号括起来
@@ -6,11 +7,12 @@ export const reactiveEffectMap = new WeakMap();
 type ReactiveEffectOptions = {
   scheduler: () => void;
 };
-class ReactiveEffect {
+export class ReactiveEffect {
   _trackId = 0;
   _deps: Dep[] = []; //用于存放当前effect里有多少个dep
   _depsLength = 0; //主要用于记录上一次依赖的个数 后续通过比较新老length 删除多余的依赖
   private parent?: activeEffect;
+  _dirtyLevel: number = DirtyLevels.Dirty;
   isRunning = 0;
   constructor(private fn: () => void, private scheduler: () => void) {} //会被转化为constructor(){this.fn = fn}
   _run() {
@@ -36,6 +38,7 @@ class ReactiveEffect {
       this.parent = activeEffect;
       activeEffect = this;
       this.isRunning++; //后续在执行时根据该值是否为0判断
+      this.dirty = false; //每次只改变都需要将这个值弄成不脏 因为值改变后只执行一下computed后续走缓存
       return this.fn();
     } finally {
       this.isRunning--;
@@ -57,6 +60,12 @@ class ReactiveEffect {
       afterClean(this);
       activeEffect = this.parent;
     }
+  }
+  get dirty() {
+    return this._dirtyLevel === DirtyLevels.Dirty;
+  }
+  set dirty(value: boolean) {
+    this._dirtyLevel = value ? DirtyLevels.Dirty : DirtyLevels.NotDirty;
   }
 }
 //每一次函数执行做的清理工作

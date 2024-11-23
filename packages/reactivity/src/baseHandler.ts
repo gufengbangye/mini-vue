@@ -1,9 +1,7 @@
 import { track, trigger } from "./track";
 import { isObject } from "@mini-vue/shared";
 import { reactive } from "./reactive";
-export enum ReactiveFlags {
-  IS_REACTIVE = "__v_isReactive",
-}
+import { ReactiveFlags } from "./constants";
 export const baseHandler = {
   get(target: object, key: PropertyKey, receiver: any): any {
     if (key === ReactiveFlags.IS_REACTIVE) {
