@@ -329,17 +329,26 @@ function doWatch(source, callback, { deep = false, depth = 0, immediate = false 
     return;
   }
   let oldValue;
+  let clean;
+  const cleanup = (fn) => {
+    clean = () => {
+      fn();
+      clean = void 0;
+    };
+  };
   const job = () => {
     const newValue = effect3._run();
-    callback(newValue, oldValue);
+    clean && clean();
+    callback(newValue, oldValue, cleanup);
     oldValue = newValue;
   };
   const effect3 = new ReactiveEffect(getter, () => {
     job();
   });
-  oldValue = effect3._run();
   if (immediate) {
     job();
+  } else {
+    oldValue = effect3._run();
   }
 }
 function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set()) {

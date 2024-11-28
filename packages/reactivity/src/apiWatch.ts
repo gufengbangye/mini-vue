@@ -21,7 +21,11 @@ export function watch(
 }
 function doWatch(
   source: any,
-  callback: (oldValue: any, newValue: any) => void,
+  callback: (
+    oldValue: any,
+    newValue: any,
+    cleanup?: (fn: () => void) => void
+  ) => void,
   { deep = false, depth = 0, immediate = false }: watchOptions
 ) {
   let getter;
@@ -39,20 +43,29 @@ function doWatch(
     return;
   }
   let oldValue: any;
-  //如果是当响应式才可以进行监听
-
+  let clean: void | (() => void);
+  //如果是当响应式才可以进行监听 cleanup接受fn 每一次执行都会调用一次fn
+  const cleanup = (fn: () => void) => {
+    clean = () => {
+      fn();
+      clean = undefined;
+    };
+  };
   const job = () => {
     const newValue = effect._run();
-    callback(newValue, oldValue);
+    clean && clean();
+    callback(newValue, oldValue, cleanup);
     oldValue = newValue;
   };
 
   const effect = new ReactiveEffect(getter, () => {
     job();
   });
-  oldValue = effect._run();
+
   if (immediate) {
     job();
+  } else {
+    oldValue = effect._run();
   }
 }
 //遍历对象每个属性 这样就会触发get从而将属性和当前的effect关联起来

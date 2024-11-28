@@ -20,14 +20,6 @@
       } from "./reactivity.js";
 
       // import {
-      //   toRef,
-      //   ref,
-      //   reactive,
-      //   effect,
-      //   toRefs,
-      //   computed,
-      // } from "/node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
-      // import {
       //   watch,
       //   ref,
       //   reactive,
@@ -48,15 +40,36 @@
       //   },
       // });
 
-      // effect(() => {
-      //   console.log(person.value);
-      //   console.log(person.value);
-      //   console.log(person.value);
-      // });
+      effect(() => {
+        app.textContent = state.name;
+      });
+      let timer = 6000;
+      const sleep = (timer) => {
+        return new Promise((res) => {
+          setTimeout(() => {
+            debugger;
+            res(timer);
+          }, timer);
+        });
+      };
+      const getUserInfo = async () => {
+        if (timer <= 0) return;
+        const res = await sleep((timer -= 2000));
+        return res;
+      };
+
       watch(
         person,
-        (newValue, oldValue) => {
-          console.log(oldValue, newValue);
+        async (newValue, oldValue, cleanup) => {
+          let flag = true;
+          cleanup(() => {
+            //
+            // console.log("执行里", newValue, oldValue);
+            flag = false;
+          });
+          const res = await getUserInfo();
+          if (!flag) return;
+          state.name = res;
         },
         {
           deep: true,
@@ -64,8 +77,13 @@
           // immediate: true,
         }
       );
-      setInterval(() => {
+      setTimeout(() => {
+        console.log("执行里");
         person.value++;
+        setTimeout(() => {
+          console.log("执行里");
+          person.value++;
+        }, 1000);
       }, 1000);
     </script>
   </body>
