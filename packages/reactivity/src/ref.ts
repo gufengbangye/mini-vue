@@ -80,3 +80,6 @@ class ObjectRefImpl {
     this.raw[this.key] = newValue;
   }
 }
+export function isRef(obj: any): boolean {
+  return obj.__v__isRef;
+}

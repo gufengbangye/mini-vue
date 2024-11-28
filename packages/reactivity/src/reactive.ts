@@ -30,3 +30,6 @@ function createReactive<T extends object>(
 export function toReactive(value: any) {
   return isObject(value) ? reactive(value) : value;
 }
+export function isReactive(obj: any): boolean {
+  return obj[ReactiveFlags.IS_REACTIVE];
+}

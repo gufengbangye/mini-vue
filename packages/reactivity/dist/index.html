@@ -26,11 +26,18 @@
       //   effect,
       //   toRefs,
       //   computed,
-      // } from "../../../node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
+      // } from "/node_modules/.pnpm/@vue+reactivity@3.4.38/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js";
+      // import {
+      //   watch,
+      //   ref,
+      //   reactive,
+      //   effect,
+      // } from "/node_modules/vue/dist/vue.esm-browser.js";
       const app = document.getElementById("app");
       //响应式会丢失
       //let { a, b } = reactive({ a: 1, b: 2 });
       const state = reactive({ name: 1, address: { n: 1 } });
+      const person = ref(0);
       // const name = computed({
       //   get(oldValue) {
       //     console.log("执行", oldValue);
@@ -42,22 +49,23 @@
       // });
 
       // effect(() => {
-      //   console.log(name.value);
-      //   console.log(name.value);
-      //   console.log(name.value);
+      //   console.log(person.value);
+      //   console.log(person.value);
+      //   console.log(person.value);
       // });
       watch(
-        state,
-        (oldValue, newValue) => {
+        person,
+        (newValue, oldValue) => {
           console.log(oldValue, newValue);
         },
         {
           deep: true,
           depth: 2,
+          // immediate: true,
         }
       );
-      setTimeout(() => {
-        state.address.n = "pink";
+      setInterval(() => {
+        person.value++;
       }, 1000);
     </script>
   </body>

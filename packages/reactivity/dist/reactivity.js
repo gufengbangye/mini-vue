@@ -58,6 +58,7 @@ function trackEffect(effect3, dep) {
       effect3._deps[effect3._depsLength++] = dep;
     }
   }
+  console.log(effect3, dep, "lslsl");
 }
 function cleanEffectDep(effect3, dep) {
   dep.delete(effect3);
@@ -189,6 +190,9 @@ function createReactive(obj) {
 function toReactive(value) {
   return isObject(value) ? reactive(value) : value;
 }
+function isReactive(obj) {
+  return obj["__v_isReactive" /* IS_REACTIVE */];
+}
 
 // packages/reactivity/src/ref.ts
 function ref(rawValue) {
@@ -266,6 +270,9 @@ var ObjectRefImpl = class {
     this.raw[this.key] = newValue;
   }
 };
+function isRef(obj) {
+  return obj.__v__isRef;
+}
 
 // packages/reactivity/src/computed.ts
 function computed(getterOrOptions) {
@@ -312,18 +319,32 @@ var ComputedRefImpl = class {
 function watch(source, callback, options) {
   doWatch(source, callback, options);
 }
-function doWatch(source, callback, { deep = false, depth = 0 }) {
-  const getter = () => traves(source, depth = deep ? depth ? depth : Infinity : 1, 0);
+function doWatch(source, callback, { deep = false, depth = 0, immediate = false }) {
+  let getter;
+  debugger;
+  if (isReactive(source)) {
+    getter = () => traves(source, depth = deep ? depth ? depth : Infinity : 1, 0);
+  } else if (isRef(source)) {
+    console.log("ref");
+    getter = () => source.value;
+  } else if (isFunction(source)) {
+    getter = source;
+  } else {
+    return;
+  }
   let oldValue;
   const job = () => {
     const newValue = effect3._run();
-    callback(oldValue, newValue);
+    callback(newValue, oldValue);
     oldValue = newValue;
   };
   const effect3 = new ReactiveEffect(getter, () => {
     job();
   });
   oldValue = effect3._run();
+  if (immediate) {
+    job();
+  }
 }
 function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set()) {
   if (!isObject(source)) {
@@ -350,6 +371,8 @@ export {
   activeEffect,
   computed,
   effect,
+  isReactive,
+  isRef,
   proxyRefs,
   reactive,
   reactiveEffectMap,

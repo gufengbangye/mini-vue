@@ -1,6 +1,6 @@
 import { Dep } from "./Dep";
 import { DirtyLevels } from "./constants";
-//用于后续将当前的effect和后续响应式数据的改变关联起来
+//用于后续将当前的effect和后续响应式数据的改变关联起来 比如effect(() => {}) effect传入的函数即是activeEffect 这样执行函数触发get的时候就可以获取当前她所在的函数 后续值改变的时候在触发一下这个fn即可
 export type activeEffect = void | ReactiveEffect;
 export let activeEffect: activeEffect; //联合类型里函数需要被括号括起来
 export const reactiveEffectMap = new WeakMap();
@@ -128,6 +128,7 @@ export function trackEffect(effect: Exclude<activeEffect, void>, dep: Dep) {
     // {flag,address}
     //因为大部分时候代码从上到下执行顺序不变所以可以通过数组顺序即可
   }
+  console.log(effect, dep, "lslsl");
 }
 //移除dep里的effect
 function cleanEffectDep(effect: activeEffect, dep: Dep) {
