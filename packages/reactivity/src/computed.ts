@@ -35,14 +35,12 @@ class ComputedRefImpl {
     if (this._effect?.dirty) {
       //如果是脏的就执行一次
       this._value = this._effect._run(); //每一次结果就是传进来函数的返回值
-      debugger;
       trackRefValue(this); //收集依赖
     }
     return this._value;
   }
   set value(v) {
     // return true;
-    console.log("设置");
     this.setter(v);
   }
 }

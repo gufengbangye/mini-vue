@@ -128,7 +128,6 @@ export function trackEffect(effect: Exclude<activeEffect, void>, dep: Dep) {
     // {flag,address}
     //因为大部分时候代码从上到下执行顺序不变所以可以通过数组顺序即可
   }
-  console.log(effect, dep, "lslsl");
 }
 //移除dep里的effect
 function cleanEffectDep(effect: activeEffect, dep: Dep) {

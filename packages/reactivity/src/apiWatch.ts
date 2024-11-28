@@ -25,7 +25,6 @@ function doWatch(
   { deep = false, depth = 0, immediate = false }: watchOptions
 ) {
   let getter;
-  debugger;
   if (isReactive(source)) {
     getter = () =>
       traves(source, (depth = deep ? (depth ? depth : Infinity) : 1), 0);

@@ -58,7 +58,6 @@ function trackEffect(effect3, dep) {
       effect3._deps[effect3._depsLength++] = dep;
     }
   }
-  console.log(effect3, dep, "lslsl");
 }
 function cleanEffectDep(effect3, dep) {
   dep.delete(effect3);
@@ -220,7 +219,7 @@ var RefImpl = class {
 function trackRefValue(ref2) {
   activeEffect && trackEffect(
     activeEffect,
-    ref2._dep = createDep(() => ref2._dep = void 0, "undefined")
+    ref2._dep || (ref2._dep = createDep(() => ref2._dep = void 0, `undefined`))
     //由于ref和reactive的主要不同就是ref:ref(false) reactive:{name:a,b:c} 所以ref不像reactive那样需要使用reactiveEffectMap通过key去拿到不同的dep 他就直接在实例上自身创建一个dep即可
   );
 }
@@ -304,13 +303,11 @@ var ComputedRefImpl = class {
     console.log(this._effect?.dirty, "dirty");
     if (this._effect?.dirty) {
       this._value = this._effect._run();
-      debugger;
       trackRefValue(this);
     }
     return this._value;
   }
   set value(v) {
-    console.log("\u8BBE\u7F6E");
     this.setter(v);
   }
 };
@@ -321,7 +318,6 @@ function watch(source, callback, options) {
 }
 function doWatch(source, callback, { deep = false, depth = 0, immediate = false }) {
   let getter;
-  debugger;
   if (isReactive(source)) {
     getter = () => traves(source, depth = deep ? depth ? depth : Infinity : 1, 0);
   } else if (isRef(source)) {
