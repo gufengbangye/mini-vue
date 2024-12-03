@@ -1,0 +1,17 @@
+{
+  "name": "@mini-vue/runtime-core",
+  "version": "1.0.0",
+  "module": "./dist/runtime-core.esm-bundler.js",
+  "buildOptions": {
+    "name": "miniRuntimeCore ",
+    "formats": [
+      "esm-bundler",
+      "cjs",
+      "global",
+      "esm-browser"
+    ]
+  },
+  "dependencies": {
+    "@mini-vue/shared": "workspace:^"
+  }
+}
