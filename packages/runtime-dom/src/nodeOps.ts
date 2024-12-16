@@ -1,7 +1,11 @@
 //节点操作
 export default {
   //插入节点
-  insert: (el: HTMLElement, parent: HTMLElement, anchor: HTMLElement) => {
+  insert: (
+    el: HTMLElement,
+    parent: HTMLElement,
+    anchor: HTMLElement | null
+  ) => {
     parent.insertBefore(el, anchor || null);
     //如果anchor为null则插入到末尾 即等同于parent.appendChild(el)
   },
@@ -16,7 +20,9 @@ export default {
   //创建文本
   createText: (type: string) => document.createTextNode(type),
   //设置文本
-  setText: (node: HTMLElement, text: string) => (node.nodeValue = text),
+  setText: (node: HTMLElement, text: string) => {
+    node.nodeValue = text;
+  },
   //设置元素文本
   setElementText: (node: HTMLElement, text: string) =>
     (node.textContent = text),

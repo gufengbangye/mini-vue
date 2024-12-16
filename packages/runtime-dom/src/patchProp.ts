@@ -4,7 +4,7 @@ import patchEvent from "./modules/patchEvent";
 import patchStyle from "./modules/patchStyle";
 
 //用来处理dom class style event
-export default function patchProps(
+export default function patchProp(
   el: HTMLElement,
   key: string,
   preValue: any,
