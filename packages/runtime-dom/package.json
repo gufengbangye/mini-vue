@@ -12,7 +12,6 @@
     ]
   },
   "dependencies": {
-    "@mini-vue/reactivity": "workspace:*",
     "@mini-vue/runtime-core": "workspace:*",
     "@mini-vue/shared": "workspace:*"
   }

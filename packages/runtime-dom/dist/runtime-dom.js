@@ -1,3 +1,103 @@
+// packages/runtime-dom/src/nodeOps.ts
+var nodeOps_default = {
+  //插入节点
+  insert: (el, parent, anchor) => {
+    parent.insertBefore(el, anchor || null);
+  },
+  //移除节点
+  remove: (el) => {
+    const parent = el.parentNode;
+    parent && parent.removeChild(el);
+  },
+  //创建元素
+  createElement: (type) => document.createElement(type),
+  //创建文本
+  createText: (type) => document.createTextNode(type),
+  //设置文本
+  setText: (node, text) => {
+    node.nodeValue = text;
+  },
+  //设置元素文本
+  setElementText: (node, text) => node.textContent = text,
+  //获取父节点
+  parentNode: (node) => node.parentNode,
+  //获取下一个兄弟节点
+  nextSibling: (node) => node.nextSibling
+};
+
+// packages/runtime-dom/src/modules/patchAttr.ts
+function patchAttr(el, key, value) {
+  if (value === null) {
+    el.removeAttribute(key);
+  } else {
+    el.setAttribute(key, value);
+  }
+}
+
+// packages/runtime-dom/src/modules/patchClass.ts
+function patchClass(el, value) {
+  if (value === null) {
+    el.removeAttribute("class");
+  } else {
+    el.className = value;
+  }
+}
+
+// packages/runtime-dom/src/modules/patchEvent.ts
+function createInvoker(value) {
+  const invoker = (e) => invoker.value(e);
+  invoker.value = value;
+  return invoker;
+}
+function patchEvent(el, eventName, value) {
+  const invokers = el._vei || (el._vei = {});
+  const name = eventName.slice(2).toLowerCase();
+  const existing = invokers[name];
+  if (existing && value) {
+    return existing.value = value;
+  }
+  if (value) {
+    const invoker = createInvoker(value);
+    invokers[name] = invoker;
+    el.addEventListener(name, invoker);
+    return;
+  }
+  if (existing) {
+    el.removeEventListener(name, existing);
+    return;
+  }
+}
+
+// packages/runtime-dom/src/modules/patchStyle.ts
+function patchStyle(el, prev, next) {
+  const style = el.style;
+  if (next) {
+    for (let key in next) {
+      style[key] = next[key];
+    }
+  }
+  if (prev) {
+    for (let key in prev) {
+      if (next[key] == null) {
+        style[key] = "";
+      }
+    }
+  }
+}
+
+// packages/runtime-dom/src/patchProp.ts
+function patchProp(el, key, preValue, nextValue) {
+  if (key === "class") {
+    return patchClass(el, nextValue);
+  } else if (key === "style") {
+    return patchStyle(el, preValue, nextValue);
+  } else if (/^on[A-Z]/.test(key)) {
+    return patchEvent(el, key, nextValue);
+  } else {
+    return patchAttr(el, key, nextValue);
+  }
+}
+
 // packages/reactivity/src/effect.ts
 var activeEffect;
 var reactiveEffectMap = /* @__PURE__ */ new WeakMap();
@@ -84,6 +184,9 @@ function isObject(value) {
 }
 function isFunction(value) {
   return typeof value === "function";
+}
+function isString(value) {
+  return typeof value === "string";
 }
 
 // packages/reactivity/src/Dep.ts
@@ -372,117 +475,146 @@ function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set(
   return source;
 }
 
-// packages/runtime-dom/src/nodeOps.ts
-var nodeOps_default = {
-  //插入节点
-  insert: (el, parent, anchor) => {
-    parent.insertBefore(el, anchor || null);
-  },
-  //移除节点
-  remove: (el) => {
-    const parent = el.parentNode;
-    parent && parent.removeChild(el);
-  },
-  //创建元素
-  createElement: (type) => document.createElement(type),
-  //创建文本
-  createText: (type) => document.createTextNode(type),
-  //设置文本
-  setText: (node, text) => node.nodeValue = text,
-  //设置元素文本
-  setElementText: (node, text) => node.textContent = text,
-  //获取父节点
-  parentNode: (node) => node.parentNode,
-  //获取下一个兄弟节点
-  nextSibling: (node) => node.nextSibling
-};
+// packages/shared/src/shapeFlags.ts
+var ShapeFlags = /* @__PURE__ */ ((ShapeFlags2) => {
+  ShapeFlags2[ShapeFlags2["ELEMENT"] = 1] = "ELEMENT";
+  ShapeFlags2[ShapeFlags2["FUNCTIONAL_COMPONENT"] = 2] = "FUNCTIONAL_COMPONENT";
+  ShapeFlags2[ShapeFlags2["STATEFUL_COMPONENT"] = 4] = "STATEFUL_COMPONENT";
+  ShapeFlags2[ShapeFlags2["TEXT_CHILDREN"] = 8] = "TEXT_CHILDREN";
+  ShapeFlags2[ShapeFlags2["ARRAY_CHILDREN"] = 16] = "ARRAY_CHILDREN";
+  ShapeFlags2[ShapeFlags2["SLOTS_CHILDREN"] = 32] = "SLOTS_CHILDREN";
+  ShapeFlags2[ShapeFlags2["TELEPORT"] = 64] = "TELEPORT";
+  ShapeFlags2[ShapeFlags2["SUSPENSE"] = 128] = "SUSPENSE";
+  ShapeFlags2[ShapeFlags2["COMPONENT_SHOULD_KEEP_ALIVE"] = 256] = "COMPONENT_SHOULD_KEEP_ALIVE";
+  ShapeFlags2[ShapeFlags2["COMPONENT_KEPT_ALIVE"] = 512] = "COMPONENT_KEPT_ALIVE";
+  ShapeFlags2[ShapeFlags2["COMPONENT"] = 6] = "COMPONENT";
+  return ShapeFlags2;
+})(ShapeFlags || {});
 
-// packages/runtime-dom/src/modules/patchAttr.ts
-function patchAttr(el, key, value) {
-  if (value === null) {
-    el.removeAttribute(key);
-  } else {
-    el.setAttribute(key, value);
-  }
+// packages/runtime-core/src/createVNode.ts
+function isVNode(obj) {
+  return obj.__v_isVNode;
 }
-
-// packages/runtime-dom/src/modules/patchClass.ts
-function patchClass(el, value) {
-  if (value === null) {
-    el.removeAttribute("class");
-  } else {
-    el.className = value;
-  }
-}
-
-// packages/runtime-dom/src/modules/patchEvent.ts
-function createInvoker(value) {
-  const invoker = (e) => invoker.value(e);
-  invoker.value = value;
-  return invoker;
-}
-function patchEvent(el, eventName, value) {
-  const invokers = el._vei || (el._vei = {});
-  const name = eventName.slice(2).toLowerCase();
-  const existing = invokers[name];
-  if (existing && value) {
-    return existing.value = value;
-  }
-  if (value) {
-    const invoker = createInvoker(value);
-    invokers[name] = invoker;
-    el.addEventListener(name, invoker);
-    return;
-  }
-  if (existing) {
-    el.removeEventListener(name, existing);
-    return;
-  }
-}
-
-// packages/runtime-dom/src/modules/patchStyle.ts
-function patchStyle(el, prev, next) {
-  const style = el.style;
-  if (next) {
-    for (let key in next) {
-      style[key] = next[key];
+function createVNode(type, props, children) {
+  let shapeFlag = isString(type) ? 1 /* ELEMENT */ : 0;
+  if (children) {
+    if (Array.isArray(children)) {
+      shapeFlag |= 16 /* ARRAY_CHILDREN */;
+    } else {
+      children = String(children);
+      shapeFlag |= 8 /* TEXT_CHILDREN */;
     }
   }
-  if (prev) {
-    for (let key in prev) {
-      if (next[key] == null) {
-        style[key] = "";
+  return {
+    __v_isVNode: true,
+    //需要标记一下用于后续判断是否为虚拟节点
+    type,
+    props,
+    children,
+    shapeFlag,
+    key: props?.key,
+    el: null
+    //需要将元素挂载到虚拟节点上后续方便移除
+  };
+}
+
+// packages/runtime-core/src/h.ts
+function h(type, propsOrChildren, children) {
+  const l = arguments.length;
+  if (l === 2) {
+    if (isObject(propsOrChildren)) {
+      if (Array.isArray(propsOrChildren)) {
+        return createVNode(type, null, propsOrChildren);
+      } else {
+        if (isVNode(propsOrChildren)) {
+          return createVNode(type, null, [propsOrChildren]);
+        } else {
+          return createVNode(type, propsOrChildren);
+        }
       }
     }
+    return createVNode(type, null, [propsOrChildren]);
+  } else {
+    if (l === 3 && isVNode(children)) {
+      return createVNode(type, propsOrChildren, [children]);
+    }
+    if (l > 3) {
+      children = Array.from(arguments).slice(2);
+      return createVNode(type, propsOrChildren, [children]);
+    }
   }
+  return createVNode(type, propsOrChildren, children);
 }
 
-// packages/runtime-dom/src/patchProps.ts
-function patchProps(el, key, preValue, nextValue) {
-  if (key === "class") {
-    return patchClass(el, nextValue);
-  } else if (key === "style") {
-    return patchStyle(el, preValue, nextValue);
-  } else if (/^on[A-Z]/.test(key)) {
-    return patchEvent(el, key, nextValue);
-  } else {
-    return patchAttr(el, key, nextValue);
-  }
-}
+// packages/runtime-core/src/index.ts
+var createRenderer = (options) => {
+  const {
+    createElement: hostCreateElement,
+    createText: hostCreateText,
+    insert: hostInsert,
+    nextSibling: hostNextSibling,
+    parentNode: hostParentNode,
+    remove: hostRemove,
+    patchProp: hostPatchProp,
+    setElementText: hostSetElementText,
+    setText: hostSetText
+  } = options;
+  const mountChildren = (children, container) => {
+    for (let i = 0; i < children.length; i++) {
+      console.log(children[i], "child");
+      patch(null, children[i], container);
+    }
+  };
+  const mountElement = (n1, container) => {
+    const { type, props, children, shapeFlag } = n1;
+    console.log(ShapeFlags, "lll");
+    const el = hostCreateElement(type);
+    if (props) {
+      for (const key in props) {
+        hostPatchProp(el, key, null, props[key]);
+      }
+    }
+    if (shapeFlag & 8 /* TEXT_CHILDREN */) {
+      hostSetElementText(el, children);
+    } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+      mountChildren(children, el);
+    }
+    hostInsert(el, container, null);
+  };
+  const patch = (n1, n2, container) => {
+    console.log(n1, container);
+    if (n1 === n2) return;
+    if (n1 === null) {
+      mountElement(n2, container);
+    }
+  };
+  const render2 = (vNode, container) => {
+    console.log(vNode, container);
+    patch(container._vNode || null, vNode, container);
+    container._vNode = vNode;
+  };
+  return {
+    render: render2
+  };
+};
 
 // packages/runtime-dom/src/index.ts
-var renderOptions = Object.assign({ patchProp: patchProps }, nodeOps_default);
+var renderOptions = Object.assign({ patchProp }, nodeOps_default);
+var render = createRenderer(renderOptions).render;
 export {
   ReactiveEffect,
   activeEffect,
   computed,
+  createRenderer,
   effect,
+  h,
   isReactive,
   isRef,
   proxyRefs,
   reactive,
   reactiveEffectMap,
   ref,
+  render,
   renderOptions,
   toReactive,
   toRef,
