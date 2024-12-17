@@ -1,9 +1,9 @@
 import { ShapeFlags } from "packages/shared/src/shapeFlags";
 import { isString } from "@mini-vue/shared";
-type VNode = {
+export type VNode = {
   __v_isVNode: true; //需要标记一下用于后续判断是否为虚拟节点
   type: string | typeof Function;
-  props: object | null;
+  props: Record<string, any> | null;
   children: string | Array<VNode>;
   shapeFlag: number;
   key: undefined | string;

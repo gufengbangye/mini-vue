@@ -8,40 +8,18 @@
   <body>
     <div id="app"></div>
     <script type="module">
-      import {
-        h,
-        render,
-      } from "/node_modules/.pnpm/@vue+runtime-dom@3.4.38/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
-      // import { render, h } from "./runtime-dom.js";
+      // import {
+      //   h,
+      //   render,
+      // } from "/node_modules/.pnpm/@vue+runtime-dom@3.4.38/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
+      import { render, h } from "./runtime-dom.js";
       // console.log(render);
       const ele = h("div");
-      const ele1 = h("div", { style: { color: "pink" } });
-      const ele2 = h("div", h("p", "hello"));
-      const ele3 = h("div", [h("p", "hello"), h("p", "world")]);
-      const ele4 = h("div", 123);
-      const ele5 = h("div", "f", [h("p", "hello"), h("p", "world")]); //三个参数的时候第二个必须是属性
-      const ele6 = h("div", {}, [h("p", "hello"), h("p", "world")], 1, 2, 3, 4);
-      console.log(ele);
-      console.log(ele1);
-      console.log(ele2);
-      console.log(ele3);
-      console.log(ele4);
-      console.log(ele5);
-
-      console.log(ele6);
-      render(ele6, app);
-      // setTimeout(() => {
-      //   render(
-      //     h(
-      //       "div",
-      //       {
-      //         style: { color: "blue" },
-      //       },
-      //       "hello"
-      //     ),
-      //     app
-      //   );
-      // }, 2000);
+      const ele1 = h("div", { style: { color: "pink" } }, "hello");
+      render(ele1, app);
+      setTimeout(() => {
+        render(null, app);
+      }, 2000);
     </script>
   </body>
 </html>

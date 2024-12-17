@@ -1,14 +1,5 @@
 import { isObject } from "@mini-vue/shared";
-import { createVNode, isVNode } from "./createVNode";
-type VNode = {
-  __v_isVNode: true; //需要标记一下用于后续判断是否为虚拟节点
-  type: string | typeof Function;
-  props: object | null;
-  children: string | Array<VNode>;
-  shapeFlag: number;
-  key: undefined | string;
-  el: null | HTMLElement; //需要将元素挂载到虚拟节点上后续方便移除
-};
+import { createVNode, isVNode, VNode } from "./createVNode";
 // 可以是一个参数，2个参数(类型，属性/儿子)  3个(标准的)超过3个(从第三个开始都是儿子)
 // h(类型，属性，儿子》
 // h(类型，儿子)
@@ -58,7 +49,7 @@ export function h(type: string, propsOrChildren: any, children?: any): VNode {
       return createVNode(type, propsOrChildren, [children]);
     }
     if (l > 3) {
-      //
+      //h('div',{},'1','2','3')
       children = Array.from(arguments).slice(2);
       return createVNode(type, propsOrChildren, [children]);
     }

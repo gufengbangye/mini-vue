@@ -568,7 +568,7 @@ var createRenderer = (options) => {
   const mountElement = (n1, container) => {
     const { type, props, children, shapeFlag } = n1;
     console.log(ShapeFlags, "lll");
-    const el = hostCreateElement(type);
+    const el = n1.el = hostCreateElement(type);
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key]);
@@ -581,9 +581,15 @@ var createRenderer = (options) => {
     }
     hostInsert(el, container, null);
   };
+  const unmount = (vNode) => {
+    const el = vNode.el;
+    el && hostRemove(el);
+  };
   const patch = (n1, n2, container) => {
-    console.log(n1, container);
     if (n1 === n2) return;
+    if (n2 === null) {
+      unmount(n1);
+    }
     if (n1 === null) {
       mountElement(n2, container);
     }
