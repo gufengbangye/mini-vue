@@ -1,6 +1,6 @@
 export * from "@mini-vue/reactivity";
 import { ShapeFlags } from "packages/shared/src/shapeFlags";
-import { VNode } from "./createVNode";
+import { isSameVNode, VNode } from "./createVNode";
 export interface RenderOptions {
   insert: (
     el: HTMLElement,
@@ -71,17 +71,47 @@ export const createRenderer = (options: RenderOptions) => {
     const el = vNode.el;
     el && hostRemove(el);
   };
+
+  const patchProps = (
+    oldProps: Record<string, any>,
+    newProps: Record<string, any>,
+    el: HTMLElement
+  ) => {
+    //对比新老props新的全部生效
+    for (const key in newProps) {
+      hostPatchProp(el, key, oldProps[key], newProps[key]);
+    }
+    //老的并且不在新的则删除
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        hostPatchProp(el, key, oldProps[key], null);
+      }
+    }
+  };
+  const patchElement = (n1: VNode, n2: VNode, container: HTMLElement) => {
+    //由于新的虚拟节点上是没有el的所以先赋值一下
+    const el = (n2.el = n1.el);
+    const oldProps = n1.props || {};
+    const newProps = n2.props || {};
+    patchProps(oldProps, newProps, el!);
+  };
   //n1是上一次节点 n2是当前节点
   const patch = (n1: VNode | null, n2: VNode, container: HTMLElement) => {
     if (n1 === n2) return; // 如果一样就不更新
-    if (n2 === null) {
-      //移除当前节点
-      //所以需要将el挂载在虚拟节点上
-      unmount(n1!);
+
+    //如果不一样就将之前的移除然后将新的渲染
+    if (n1 && !isSameVNode(n1, n2)) {
+      //如果是不一样的就进来
+      console.log("进来了");
+      unmount(n1);
+      n1 = null;
     }
+
     if (n1 === null) {
       //如果没有前值 就表示是初始化直接渲染
       mountElement(n2, container);
+    } else {
+      patchElement(n1, n2, container); //如果n1和n2是一种类型并且key一样则做diff更新
     }
   };
   const render = (
@@ -91,6 +121,12 @@ export const createRenderer = (options: RenderOptions) => {
     }
   ) => {
     console.log(vNode, container);
+    if (vNode === null) {
+      //移除当前节点
+      //所以需要将el挂载在虚拟节点上
+      container._vNode && unmount(container._vNode);
+      return;
+    }
     //去渲染节点
     patch(container._vNode || null, vNode, container);
     //将vNode放在元素上 用于下次比对

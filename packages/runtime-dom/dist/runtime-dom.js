@@ -495,6 +495,9 @@ var ShapeFlags = /* @__PURE__ */ ((ShapeFlags2) => {
 function isVNode(obj) {
   return obj.__v_isVNode;
 }
+function isSameVNode(n1, n2) {
+  return n1.type === n2.type && n1.key === n2.key;
+}
 function createVNode(type, props, children) {
   let shapeFlag = isString(type) ? 1 /* ELEMENT */ : 0;
   if (children) {
@@ -585,17 +588,41 @@ var createRenderer = (options) => {
     const el = vNode.el;
     el && hostRemove(el);
   };
+  const patchProps = (oldProps, newProps, el) => {
+    for (const key in newProps) {
+      hostPatchProp(el, key, oldProps[key], newProps[key]);
+    }
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        hostPatchProp(el, key, oldProps[key], null);
+      }
+    }
+  };
+  const patchElement = (n1, n2, container) => {
+    const el = n2.el = n1.el;
+    const oldProps = n1.props || {};
+    const newProps = n2.props || {};
+    patchProps(oldProps, newProps, el);
+  };
   const patch = (n1, n2, container) => {
     if (n1 === n2) return;
-    if (n2 === null) {
+    if (n1 && !isSameVNode(n1, n2)) {
+      console.log("\u8FDB\u6765\u4E86");
       unmount(n1);
+      n1 = null;
     }
     if (n1 === null) {
       mountElement(n2, container);
+    } else {
+      patchElement(n1, n2, container);
     }
   };
   const render2 = (vNode, container) => {
     console.log(vNode, container);
+    if (vNode === null) {
+      container._vNode && unmount(container._vNode);
+      return;
+    }
     patch(container._vNode || null, vNode, container);
     container._vNode = vNode;
   };

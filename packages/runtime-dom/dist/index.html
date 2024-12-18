@@ -14,12 +14,16 @@
       // } from "/node_modules/.pnpm/@vue+runtime-dom@3.4.38/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
       import { render, h } from "./runtime-dom.js";
       // console.log(render);
-      const ele = h("div");
-      const ele1 = h("div", { style: { color: "pink" } }, "hello");
-      render(ele1, app);
+      const ele = h(
+        "div",
+        { key: 1, style: { color: "blue", fontSize: "16px" }, abc: 123 },
+        "1111"
+      );
+      const ele1 = h("span", { key: 1, style: { color: "pink" } }, "hello");
+      render(ele, app);
       setTimeout(() => {
-        render(null, app);
-      }, 2000);
+        render(ele1, app);
+      }, 4000);
     </script>
   </body>
 </html>

@@ -12,6 +12,9 @@ export type VNode = {
 export function isVNode(obj: any): boolean {
   return obj.__v_isVNode;
 }
+export function isSameVNode(n1: VNode, n2: VNode) {
+  return n1.type === n2.type && n1.key === n2.key;
+}
 export function createVNode(type: any, props: any, children?: any): VNode {
   let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0;
   //如果children是文本需要改变shapeFlag
