@@ -22,7 +22,6 @@ export interface RenderOptions {
   parentNode: (node: HTMLElement) => Node | null;
 }
 
-const patch = (n1: VNode, container: HTMLElement) => {};
 export const createRenderer = (options: RenderOptions) => {
   const {
     createElement: hostCreateElement,
@@ -45,7 +44,6 @@ export const createRenderer = (options: RenderOptions) => {
   //将虚拟对象渲染到页面上
   const mountElement = (n1: VNode, container: HTMLElement) => {
     const { type, props, children, shapeFlag } = n1;
-    console.log(ShapeFlags, "lll");
     // 创建元素
     const el = (n1.el = hostCreateElement(type as keyof HTMLElementTagNameMap));
     if (props) {
@@ -88,12 +86,60 @@ export const createRenderer = (options: RenderOptions) => {
       }
     }
   };
+  const unmountChildren = (vNode: any) => {
+    for (let i = 0; i < vNode.length; i++) {
+      unmount(vNode[i]);
+    }
+  };
+  const patchChildren = (n1: VNode, n2: VNode, el: HTMLElement) => {
+    //分为几点情况
+    //新的是文本节点旧的是文本节点
+    const c1 = n1.children;
+    const c2 = n2.children;
+    const prevShapeFlag = n1.shapeFlag;
+    const shapeFlag = n2.shapeFlag;
+    //获取新的虚拟节点的shapeFlag 子元素如果是文本节点
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      //如果是旧的则将之前删除然后把新的文本放进去
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(c1);
+      }
+      //如果旧的是文本节点就替换
+      if (c1 !== c2) {
+        hostSetElementText(el, c2 as string);
+      }
+    } else {
+      //旧的是数组
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          //数组diff
+          console.log("数组diff");
+        } else {
+          //不是数组就都删除
+          unmountChildren(n1);
+        }
+      } else {
+        //旧的是文本节点
+        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          hostSetElementText(el, "");
+        }
+        //新的是数组
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          mountChildren(c2, el);
+        }
+      }
+    }
+    //如果新的儿子是数组
+  };
   const patchElement = (n1: VNode, n2: VNode, container: HTMLElement) => {
     //由于新的虚拟节点上是没有el的所以先赋值一下
     const el = (n2.el = n1.el);
     const oldProps = n1.props || {};
     const newProps = n2.props || {};
+    //对比props
     patchProps(oldProps, newProps, el!);
+    //对比子节点
+    patchChildren(n1, n2, el!);
   };
   //n1是上一次节点 n2是当前节点
   const patch = (n1: VNode | null, n2: VNode, container: HTMLElement) => {

@@ -35,14 +35,14 @@ export function h(type: string, propsOrChildren: any, children?: any): VNode {
       } else {
         if (isVNode(propsOrChildren)) {
           //h('div', h('div'))
-          return createVNode(type, null, [propsOrChildren]);
+          return createVNode(type, null, propsOrChildren);
         } else {
           //h('div', {style:{color:pink}})
           return createVNode(type, propsOrChildren);
         }
       }
     }
-    return createVNode(type, null, [propsOrChildren]);
+    return createVNode(type, null, propsOrChildren);
   } else {
     if (l === 3 && isVNode(children)) {
       //h('div',{style:{color:pink}},h('div','hello'))

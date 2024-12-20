@@ -16,10 +16,10 @@
       // console.log(render);
       const ele = h(
         "div",
-        { key: 1, style: { color: "blue", fontSize: "16px" }, abc: 123 },
-        "1111"
+        { key: 4, style: { color: "blue", fontSize: "16px" }, abc: 123 },
+        [h("div", "hello"), h("div", "world")]
       );
-      const ele1 = h("span", { key: 1, style: { color: "pink" } }, "hello");
+      const ele1 = h("div", { key: 1, style: { color: "pink" } }, "");
       render(ele, app);
       setTimeout(() => {
         render(ele1, app);

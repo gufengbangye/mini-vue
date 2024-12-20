@@ -475,22 +475,6 @@ function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set(
   return source;
 }
 
-// packages/shared/src/shapeFlags.ts
-var ShapeFlags = /* @__PURE__ */ ((ShapeFlags2) => {
-  ShapeFlags2[ShapeFlags2["ELEMENT"] = 1] = "ELEMENT";
-  ShapeFlags2[ShapeFlags2["FUNCTIONAL_COMPONENT"] = 2] = "FUNCTIONAL_COMPONENT";
-  ShapeFlags2[ShapeFlags2["STATEFUL_COMPONENT"] = 4] = "STATEFUL_COMPONENT";
-  ShapeFlags2[ShapeFlags2["TEXT_CHILDREN"] = 8] = "TEXT_CHILDREN";
-  ShapeFlags2[ShapeFlags2["ARRAY_CHILDREN"] = 16] = "ARRAY_CHILDREN";
-  ShapeFlags2[ShapeFlags2["SLOTS_CHILDREN"] = 32] = "SLOTS_CHILDREN";
-  ShapeFlags2[ShapeFlags2["TELEPORT"] = 64] = "TELEPORT";
-  ShapeFlags2[ShapeFlags2["SUSPENSE"] = 128] = "SUSPENSE";
-  ShapeFlags2[ShapeFlags2["COMPONENT_SHOULD_KEEP_ALIVE"] = 256] = "COMPONENT_SHOULD_KEEP_ALIVE";
-  ShapeFlags2[ShapeFlags2["COMPONENT_KEPT_ALIVE"] = 512] = "COMPONENT_KEPT_ALIVE";
-  ShapeFlags2[ShapeFlags2["COMPONENT"] = 6] = "COMPONENT";
-  return ShapeFlags2;
-})(ShapeFlags || {});
-
 // packages/runtime-core/src/createVNode.ts
 function isVNode(obj) {
   return obj.__v_isVNode;
@@ -530,13 +514,13 @@ function h(type, propsOrChildren, children) {
         return createVNode(type, null, propsOrChildren);
       } else {
         if (isVNode(propsOrChildren)) {
-          return createVNode(type, null, [propsOrChildren]);
+          return createVNode(type, null, propsOrChildren);
         } else {
           return createVNode(type, propsOrChildren);
         }
       }
     }
-    return createVNode(type, null, [propsOrChildren]);
+    return createVNode(type, null, propsOrChildren);
   } else {
     if (l === 3 && isVNode(children)) {
       return createVNode(type, propsOrChildren, [children]);
@@ -570,7 +554,6 @@ var createRenderer = (options) => {
   };
   const mountElement = (n1, container) => {
     const { type, props, children, shapeFlag } = n1;
-    console.log(ShapeFlags, "lll");
     const el = n1.el = hostCreateElement(type);
     if (props) {
       for (const key in props) {
@@ -598,11 +581,46 @@ var createRenderer = (options) => {
       }
     }
   };
+  const unmountChildren = (vNode) => {
+    for (let i = 0; i < vNode.length; i++) {
+      unmount(vNode[i]);
+    }
+  };
+  const patchChildren = (n1, n2, el) => {
+    const c1 = n1.children;
+    const c2 = n2.children;
+    const prevShapeFlag = n1.shapeFlag;
+    const shapeFlag = n2.shapeFlag;
+    if (shapeFlag & 8 /* TEXT_CHILDREN */) {
+      if (prevShapeFlag & 16 /* ARRAY_CHILDREN */) {
+        unmountChildren(c1);
+      }
+      if (c1 !== c2) {
+        hostSetElementText(el, c2);
+      }
+    } else {
+      if (prevShapeFlag & 16 /* ARRAY_CHILDREN */) {
+        if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+          console.log("\u6570\u7EC4diff");
+        } else {
+          unmountChildren(n1);
+        }
+      } else {
+        if (prevShapeFlag & 8 /* TEXT_CHILDREN */) {
+          hostSetElementText(el, "");
+        }
+        if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+          mountChildren(c2, el);
+        }
+      }
+    }
+  };
   const patchElement = (n1, n2, container) => {
     const el = n2.el = n1.el;
     const oldProps = n1.props || {};
     const newProps = n2.props || {};
     patchProps(oldProps, newProps, el);
+    patchChildren(n1, n2, el);
   };
   const patch = (n1, n2, container) => {
     if (n1 === n2) return;
