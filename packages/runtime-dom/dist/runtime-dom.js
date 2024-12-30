@@ -552,7 +552,7 @@ var createRenderer = (options) => {
       patch(null, children[i], container);
     }
   };
-  const mountElement = (n1, container) => {
+  const mountElement = (n1, container, anchor) => {
     const { type, props, children, shapeFlag } = n1;
     const el = n1.el = hostCreateElement(type);
     if (props) {
@@ -565,7 +565,7 @@ var createRenderer = (options) => {
     } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
       mountChildren(children, el);
     }
-    hostInsert(el, container, null);
+    hostInsert(el, container, anchor);
   };
   const unmount = (vNode) => {
     const el = vNode.el;
@@ -586,6 +586,75 @@ var createRenderer = (options) => {
       unmount(vNode[i]);
     }
   };
+  const patchKeyChildren = (c1, c2, el) => {
+    debugger;
+    let i = 0;
+    let e1 = c1.length - 1;
+    let e2 = c2.length - 1;
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i];
+      const n2 = c2[i];
+      if (isSameVNode(n1, n2)) {
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+      i++;
+    }
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+      if (isSameVNode(n1, n2)) {
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
+    console.log(i, e1, e2);
+    if (i > e1) {
+      while (i <= e2) {
+        const anchor = c2[i + 1]?.el;
+        patch(null, c2[i], el, anchor);
+        i++;
+      }
+    } else if (i > e2) {
+      while (i <= e1) {
+        unmount(c1[i]);
+        i++;
+      }
+    } else {
+      let s1 = i;
+      let s2 = i;
+      const keyTonNewIdexMap = /* @__PURE__ */ new Map();
+      for (let i2 = s2; i2 <= e2; i2++) {
+        const key = c2[i2].key;
+        keyTonNewIdexMap.set(key, i2);
+      }
+      for (let i2 = s1; i2 <= e1; i2++) {
+        const key = c1[i2].key;
+        if (keyTonNewIdexMap.has(key)) {
+          const index = keyTonNewIdexMap.get(key);
+          patch(c1[i2], c2[index], el);
+        } else {
+          unmount(c1[i2]);
+        }
+      }
+      console.log(s1, e1, s2, e2);
+      const toPatchedLength = e2 - s2 + 1;
+      for (let i2 = toPatchedLength - 1; i2 > 0; i2--) {
+        const newIndex = i2 + s2;
+        const vNode = c2[i2 + s2];
+        const anchor = c2[newIndex + 1]?.el;
+        if (!vNode.el) {
+          patch(null, vNode, el, anchor);
+        } else {
+          hostInsert(vNode.el, el, anchor);
+        }
+      }
+    }
+  };
   const patchChildren = (n1, n2, el) => {
     const c1 = n1.children;
     const c2 = n2.children;
@@ -602,6 +671,7 @@ var createRenderer = (options) => {
       if (prevShapeFlag & 16 /* ARRAY_CHILDREN */) {
         if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
           console.log("\u6570\u7EC4diff");
+          patchKeyChildren(c1, c2, el);
         } else {
           unmountChildren(n1);
         }
@@ -622,7 +692,7 @@ var createRenderer = (options) => {
     patchProps(oldProps, newProps, el);
     patchChildren(n1, n2, el);
   };
-  const patch = (n1, n2, container) => {
+  const patch = (n1, n2, container, anchor = null) => {
     if (n1 === n2) return;
     if (n1 && !isSameVNode(n1, n2)) {
       console.log("\u8FDB\u6765\u4E86");
@@ -630,7 +700,7 @@ var createRenderer = (options) => {
       n1 = null;
     }
     if (n1 === null) {
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       patchElement(n1, n2, container);
     }

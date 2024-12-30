@@ -42,7 +42,11 @@ export const createRenderer = (options: RenderOptions) => {
     }
   };
   //将虚拟对象渲染到页面上
-  const mountElement = (n1: VNode, container: HTMLElement) => {
+  const mountElement = (
+    n1: VNode,
+    container: HTMLElement,
+    anchor: null | HTMLElement
+  ) => {
     const { type, props, children, shapeFlag } = n1;
     // 创建元素
     const el = (n1.el = hostCreateElement(type as keyof HTMLElementTagNameMap));
@@ -62,7 +66,7 @@ export const createRenderer = (options: RenderOptions) => {
     }
 
     //插入元素
-    hostInsert(el, container, null);
+    hostInsert(el, container, anchor);
   };
   //移除节点
   const unmount = (vNode: VNode) => {
@@ -91,6 +95,125 @@ export const createRenderer = (options: RenderOptions) => {
       unmount(vNode[i]);
     }
   };
+  //n1是旧的儿子
+  //n2是新的儿子
+  const patchKeyChildren = (c1: any, c2: any, el: HTMLElement) => {
+    debugger;
+    //从头部开始比较
+    let i = 0;
+    let e1 = c1.length - 1;
+    let e2 = c2.length - 1;
+    //[a,b]
+    //[a,b,c,e]
+    //只要i长度大于其中一个就跳出
+    while (i <= e1 && i <= e2) {
+      //只比较到相同的位置没有就跳出
+      const n1 = c1[i];
+      const n2 = c2[i];
+      if (isSameVNode(n1, n2)) {
+        //一样就更新
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+      i++;
+    }
+    //从尾部开始一一比较
+    //[k,c,e]
+    //[a,b,c,e]
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+      if (isSameVNode(n1, n2)) {
+        //一样就更新
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
+    console.log(i, e1, e2);
+    //[b,c,e] [a,b,c,e]
+    //i = 0 e1 = -1 e2>0
+    if (i > e1) {
+      while (i <= e2) {
+        //新增
+        //由于有的时候为头部新增节点，所以需要知道后一个节点
+        const anchor = c2[i + 1]?.el;
+        patch(null, c2[i], el, anchor);
+        i++;
+      }
+    } else if (i > e2) {
+      //删除
+      //新节点比较少删除
+      while (i <= e1) {
+        //删除
+        unmount(c1[i]);
+        i++;
+      }
+    } else {
+      //因为要新老节点做对比所以需要将新节点或者旧节点其中一个做map
+      let s1 = i;
+      let s2 = i;
+      const keyToNewIdexMap = new Map();
+      // //用于存放新节点对应的key例如
+      // const ele = h(
+      //   "div",
+      //   { key: 1, style: { color: "blue", fontSize: "16px" }, abc: 123 },
+      //   [
+      //     h("div", { key: "a" }, "a"),
+      //     h("div", { key: "b", style: { color: "pink" } }, "b"),
+      //     h("div", { key: "c" }, "c"),
+      //     h("div", { key: "d" }, "d"),
+      //     h("div", { key: "e" }, "e"),
+      //     h("div", { key: "f" }, "f"),
+      //     h("div", { key: "g" }, "g"),
+      //   ]
+      // );
+      // const ele1 = h("div", { key: 1, style: { color: "pink" } }, [
+      //   h("div", { key: "a" }, "a"),
+      //   h("div", { key: "b", style: { color: "yellow" } }, "b"),
+      //   h("div", { key: "e" }, "e"),
+      //   h("div", { key: "c" }, "c"),
+      //   h("div", { key: "d" }, "d"),
+      //   h("div", { key: "h" }, "h"),
+      //   h("div", { key: "f" }, "f"),
+      //   h("div", { key: "g" }, "g"),
+      // ]);
+      //就是将中间的ecdh做成map 后续通过判断key在不在这个map里去决定是更新还是新增
+      for (let i = s2; i <= e2; i++) {
+        const key = c2[i].key;
+        keyToNewIdexMap.set(key, i);
+      }
+      for (let i = s1; i <= e1; i++) {
+        //如果相同的key在新的那就更新
+        const key = c1[i].key;
+        if (keyToNewIdexMap.has(key)) {
+          const index = keyToNewIdexMap.get(key);
+          patch(c1[i], c2[index], el);
+        } else {
+          //不在就移除
+          unmount(c1[i]);
+        }
+      }
+      //调整顺序，因为插入可能是中间的元素 浏览器又没有提供插入一个元素后面的api所以需要倒序插入
+      const toPatchedLength = e2 - s2 + 1; //新老的长度差 需要倒序插入的个数
+      for (let i = toPatchedLength - 1; i > 0; i--) {
+        //需要倒序插入
+        const newIndex = i + s2; //
+        //判断当前有没有渲染过 没有渲染就渲染一遍
+        const vNode = c2[i + s2];
+        const anchor = c2[newIndex + 1]?.el;
+        if (!vNode.el) {
+          patch(null, vNode, el, anchor); //渲染
+        } else {
+          hostInsert(vNode.el, el, anchor); //插入
+        }
+        //渲染过就插入
+      }
+    }
+  };
   const patchChildren = (n1: VNode, n2: VNode, el: HTMLElement) => {
     //分为几点情况
     //新的是文本节点旧的是文本节点
@@ -114,6 +237,7 @@ export const createRenderer = (options: RenderOptions) => {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           //数组diff
           console.log("数组diff");
+          patchKeyChildren(c1, c2, el);
         } else {
           //不是数组就都删除
           unmountChildren(n1);
@@ -129,7 +253,6 @@ export const createRenderer = (options: RenderOptions) => {
         }
       }
     }
-    //如果新的儿子是数组
   };
   const patchElement = (n1: VNode, n2: VNode, container: HTMLElement) => {
     //由于新的虚拟节点上是没有el的所以先赋值一下
@@ -142,7 +265,12 @@ export const createRenderer = (options: RenderOptions) => {
     patchChildren(n1, n2, el!);
   };
   //n1是上一次节点 n2是当前节点
-  const patch = (n1: VNode | null, n2: VNode, container: HTMLElement) => {
+  const patch = (
+    n1: VNode | null,
+    n2: VNode,
+    container: HTMLElement,
+    anchor = null
+  ) => {
     if (n1 === n2) return; // 如果一样就不更新
 
     //如果不一样就将之前的移除然后将新的渲染
@@ -155,7 +283,7 @@ export const createRenderer = (options: RenderOptions) => {
 
     if (n1 === null) {
       //如果没有前值 就表示是初始化直接渲染
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       patchElement(n1, n2, container); //如果n1和n2是一种类型并且key一样则做diff更新
     }

@@ -14,12 +14,25 @@
       // } from "/node_modules/.pnpm/@vue+runtime-dom@3.4.38/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
       import { render, h } from "./runtime-dom.js";
       // console.log(render);
-      const ele = h(
-        "div",
-        { key: 4, style: { color: "blue", fontSize: "16px" }, abc: 123 },
-        [h("div", "hello"), h("div", "world")]
-      );
-      const ele1 = h("div", { key: 1, style: { color: "pink" } }, "");
+      const ele = h("div", { key: 1, abc: 123 }, [
+        h("div", { key: "a" }, "a"),
+        h("div", { key: "b", style: { color: "pink" } }, "b"),
+        h("div", { key: "c", style: { color: "pink" } }, "c"),
+        h("div", { key: "d" }, "d"),
+        h("div", { key: "e" }, "e"),
+        h("div", { key: "f" }, "f"),
+        h("div", { key: "g" }, "g"),
+      ]);
+      const ele1 = h("div", { key: 1 }, [
+        h("div", { key: "a" }, "a"),
+        h("div", { key: "b", style: { color: "yellow" } }, "b"),
+        h("div", { key: "e" }, "e"),
+        h("div", { key: "c", style: { color: "yellow" } }, "c"),
+        h("div", { key: "d" }, "d"),
+        h("div", { key: "h" }, "h"),
+        h("div", { key: "f" }, "f"),
+        h("div", { key: "g" }, "g"),
+      ]);
       render(ele, app);
       setTimeout(() => {
         render(ele1, app);
