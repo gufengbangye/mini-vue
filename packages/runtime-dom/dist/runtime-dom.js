@@ -505,6 +505,48 @@ function createVNode(type, props, children) {
   };
 }
 
+// packages/runtime-core/src/getSeq.ts
+function getSequence(arr) {
+  const result = [0];
+  const p = result.slice(0);
+  for (let i = 0; i < arr.length; i++) {
+    const element = arr[i];
+    if (element !== 0) {
+      if (element > arr[result[result.length - 1]]) {
+        p.push(result[result.length - 1]);
+        result.push(i);
+        continue;
+      }
+    }
+    let start = 0;
+    let end = result.length - 1;
+    let middle = 0;
+    while (start < end) {
+      middle = (start + end) / 2 | 0;
+      if (element > arr[result[middle]]) {
+        start = middle + 1;
+      } else {
+        end = middle;
+      }
+    }
+    if (element < arr[result[start]]) {
+      console.log(i);
+      p[i] = result[start - 1];
+      result[start] = i;
+    }
+  }
+  let l = result.length;
+  let last = result[l - 1];
+  while (l-- > 0) {
+    result[l] = last;
+    last = p[last];
+  }
+  console.log(p);
+  console.log(result);
+  return result;
+}
+getSequence([2, 3, 1, 5, 6, 8, 7, 9, 4]);
+
 // packages/runtime-core/src/h.ts
 function h(type, propsOrChildren, children) {
   const l = arguments.length;
@@ -627,30 +669,41 @@ var createRenderer = (options) => {
     } else {
       let s1 = i;
       let s2 = i;
-      const keyTonNewIdexMap = /* @__PURE__ */ new Map();
+      const keyToNewIdexMap = /* @__PURE__ */ new Map();
+      const toPatchedLength = e2 - s2 + 1;
+      const newIndexToOLdIndexMap = new Array(toPatchedLength).fill(
+        0
+      );
       for (let i2 = s2; i2 <= e2; i2++) {
         const key = c2[i2].key;
-        keyTonNewIdexMap.set(key, i2);
+        keyToNewIdexMap.set(key, i2);
       }
       for (let i2 = s1; i2 <= e1; i2++) {
         const key = c1[i2].key;
-        if (keyTonNewIdexMap.has(key)) {
-          const index = keyTonNewIdexMap.get(key);
+        if (keyToNewIdexMap.has(key)) {
+          const index = keyToNewIdexMap.get(key);
+          newIndexToOLdIndexMap[index - s2] = i2;
           patch(c1[i2], c2[index], el);
         } else {
           unmount(c1[i2]);
         }
       }
-      console.log(s1, e1, s2, e2);
-      const toPatchedLength = e2 - s2 + 1;
-      for (let i2 = toPatchedLength - 1; i2 > 0; i2--) {
+      const increaseSeq = getSequence(newIndexToOLdIndexMap);
+      let j = increaseSeq.length - 1;
+      console.log(increaseSeq);
+      for (let i2 = toPatchedLength - 1; i2 >= 0; i2--) {
+        debugger;
         const newIndex = i2 + s2;
         const vNode = c2[i2 + s2];
         const anchor = c2[newIndex + 1]?.el;
         if (!vNode.el) {
           patch(null, vNode, el, anchor);
         } else {
-          hostInsert(vNode.el, el, anchor);
+          if (i2 === increaseSeq[j]) {
+            j--;
+          } else {
+            hostInsert(vNode.el, el, anchor);
+          }
         }
       }
     }

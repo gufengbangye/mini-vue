@@ -1,6 +1,7 @@
 export * from "@mini-vue/reactivity";
 import { ShapeFlags } from "packages/shared/src/shapeFlags";
 import { isSameVNode, VNode } from "./createVNode";
+import getSequence from "./getSeq";
 export interface RenderOptions {
   insert: (
     el: HTMLElement,
@@ -182,6 +183,10 @@ export const createRenderer = (options: RenderOptions) => {
       //   h("div", { key: "g" }, "g"),
       // ]);
       //就是将中间的ecdh做成map 后续通过判断key在不在这个map里去决定是更新还是新增
+      const toPatchedLength = e2 - s2 + 1; //新老的长度差 需要倒序插入的个数
+      const newIndexToOLdIndexMap: number[] = new Array(toPatchedLength).fill(
+        0
+      ); //由于表示老节点在新节点的位置映射
       for (let i = s2; i <= e2; i++) {
         const key = c2[i].key;
         keyToNewIdexMap.set(key, i);
@@ -191,15 +196,19 @@ export const createRenderer = (options: RenderOptions) => {
         const key = c1[i].key;
         if (keyToNewIdexMap.has(key)) {
           const index = keyToNewIdexMap.get(key);
+          newIndexToOLdIndexMap[index - s2] = i; //index-s2就是新节点的索引 i就是老节点的位置
           patch(c1[i], c2[index], el);
         } else {
           //不在就移除
           unmount(c1[i]);
         }
       }
+      const increaseSeq = getSequence(newIndexToOLdIndexMap);
+      let j = increaseSeq.length - 1; //因为是倒叙所以取最后一个值
+      console.log(increaseSeq);
       //调整顺序，因为插入可能是中间的元素 浏览器又没有提供插入一个元素后面的api所以需要倒序插入
-      const toPatchedLength = e2 - s2 + 1; //新老的长度差 需要倒序插入的个数
-      for (let i = toPatchedLength - 1; i > 0; i--) {
+      for (let i = toPatchedLength - 1; i >= 0; i--) {
+        debugger;
         //需要倒序插入
         const newIndex = i + s2; //
         //判断当前有没有渲染过 没有渲染就渲染一遍
@@ -208,7 +217,13 @@ export const createRenderer = (options: RenderOptions) => {
         if (!vNode.el) {
           patch(null, vNode, el, anchor); //渲染
         } else {
-          hostInsert(vNode.el, el, anchor); //插入
+          if (i === increaseSeq[j]) {
+            // 因为是倒序插入所以如果跟最后一个一样就不动
+
+            j--;
+          } else {
+            hostInsert(vNode.el, el, anchor); //插入
+          }
         }
         //渲染过就插入
       }
