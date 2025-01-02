@@ -1,6 +1,6 @@
 export * from "@mini-vue/reactivity";
 import { ShapeFlags } from "packages/shared/src/shapeFlags";
-import { isSameVNode, VNode } from "./createVNode";
+import { isSameVNode, VNode, Text } from "./createVNode";
 import getSequence from "./getSeq";
 export interface RenderOptions {
   insert: (
@@ -219,7 +219,6 @@ export const createRenderer = (options: RenderOptions) => {
         } else {
           if (i === increaseSeq[j]) {
             // 因为是倒序插入所以如果跟最后一个一样就不动
-
             j--;
           } else {
             hostInsert(vNode.el, el, anchor); //插入
@@ -279,6 +278,31 @@ export const createRenderer = (options: RenderOptions) => {
     //对比子节点
     patchChildren(n1, n2, el!);
   };
+  //渲染元素
+  const processElement = (
+    n1: VNode | null,
+    n2: VNode,
+    container: HTMLElement,
+    anchor: HTMLElement | null
+  ) => {
+    if (n1 === null) {
+      //如果没有前值 就表示是初始化直接渲染
+      mountElement(n2, container, anchor);
+    } else {
+      patchElement(n1, n2, container); //如果n1和n2是一种类型并且key一样则做diff更新
+    }
+  };
+  //渲染文本
+  const processText = (n1: VNode | null, n2: VNode, container: HTMLElement) => {
+    if (n1 === null) {
+      //上一次是空这次就直接渲染
+      n2.el = hostCreateText(n2.children as string) as unknown as HTMLElement; //将真实节点和虚拟节点关联
+      hostInsert(n2.el, container, null);
+    } else {
+      const el = (n2.el = n1.el as HTMLElement); //将虚拟节点和真实节点关联
+      if (n1.children !== n2.children) hostSetText(el, n2.children as string);
+    }
+  };
   //n1是上一次节点 n2是当前节点
   const patch = (
     n1: VNode | null,
@@ -295,12 +319,13 @@ export const createRenderer = (options: RenderOptions) => {
       unmount(n1);
       n1 = null;
     }
-
-    if (n1 === null) {
-      //如果没有前值 就表示是初始化直接渲染
-      mountElement(n2, container, anchor);
-    } else {
-      patchElement(n1, n2, container); //如果n1和n2是一种类型并且key一样则做diff更新
+    switch (n2.type) {
+      case Text:
+        processText(n1, n2, container);
+        break;
+      default:
+        //渲染元素
+        processElement(n1, n2, container, anchor);
     }
   };
   const render = (
@@ -326,3 +351,4 @@ export const createRenderer = (options: RenderOptions) => {
   };
 };
 export * from "./h";
+export * from "./createVNode";

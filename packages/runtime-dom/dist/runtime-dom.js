@@ -476,6 +476,8 @@ function traves(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set(
 }
 
 // packages/runtime-core/src/createVNode.ts
+var Text = Symbol("Text");
+var Fragment = Symbol("Fragment");
 function isVNode(obj) {
   return obj.__v_isVNode;
 }
@@ -745,6 +747,22 @@ var createRenderer = (options) => {
     patchProps(oldProps, newProps, el);
     patchChildren(n1, n2, el);
   };
+  const processElement = (n1, n2, container, anchor) => {
+    if (n1 === null) {
+      mountElement(n2, container, anchor);
+    } else {
+      patchElement(n1, n2, container);
+    }
+  };
+  const processText = (n1, n2, container) => {
+    if (n1 === null) {
+      n2.el = hostCreateText(n2.children);
+      hostInsert(n2.el, container, null);
+    } else {
+      const el = n2.el = n1.el;
+      if (n1.children !== n2.children) hostSetText(el, n2.children);
+    }
+  };
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 === n2) return;
     if (n1 && !isSameVNode(n1, n2)) {
@@ -752,10 +770,12 @@ var createRenderer = (options) => {
       unmount(n1);
       n1 = null;
     }
-    if (n1 === null) {
-      mountElement(n2, container, anchor);
-    } else {
-      patchElement(n1, n2, container);
+    switch (n2.type) {
+      case Text:
+        processText(n1, n2, container);
+        break;
+      default:
+        processElement(n1, n2, container, anchor);
     }
   };
   const render2 = (vNode, container) => {
@@ -776,14 +796,19 @@ var createRenderer = (options) => {
 var renderOptions = Object.assign({ patchProp }, nodeOps_default);
 var render = createRenderer(renderOptions).render;
 export {
+  Fragment,
   ReactiveEffect,
+  Text,
   activeEffect,
   computed,
   createRenderer,
+  createVNode,
   effect,
   h,
   isReactive,
   isRef,
+  isSameVNode,
+  isVNode,
   proxyRefs,
   reactive,
   reactiveEffectMap,

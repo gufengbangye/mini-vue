@@ -2,13 +2,15 @@ import { ShapeFlags } from "packages/shared/src/shapeFlags";
 import { isString } from "@mini-vue/shared";
 export type VNode = {
   __v_isVNode: true; //需要标记一下用于后续判断是否为虚拟节点
-  type: string | typeof Function;
+  type: string | typeof Function | typeof Text;
   props: Record<string, any> | null;
   children: string | Array<VNode>;
   shapeFlag: number;
   key: undefined | string;
   el: null | HTMLElement; //需要将元素挂载到虚拟节点上后续方便移除
 };
+export const Text = Symbol("Text");
+export const Fragment = Symbol("Fragment");
 export function isVNode(obj: any): boolean {
   return obj.__v_isVNode;
 }
